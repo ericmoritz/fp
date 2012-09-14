@@ -7,6 +7,7 @@ Provides a number of operator and higher-order functions for FP fun
 ####
 ## Operators
 ####
+import sys
 from operator import (
     # arithmatic
     add, sub, mul, truediv as div, pow, mod, neg,
@@ -46,6 +47,28 @@ from functools import partial as p
 
 def c(f, g):
     return lambda x: f(g(x))
+
+
+def t(fs):
+    """Creates a threaded function call
+
+    Where compose is right associative
+
+    >>> c(p(mul, 2), p(add, 3))(2)
+    10
+
+    The thread partial is left associative
+
+    >>> t([p(add, 3), p(mul, 2)])(2)
+    10
+
+    """
+    head = ifirst(fs)
+    tail = irest(fs)
+
+    return reduce(
+        lambda composed, f: c(f, composed),
+        tail, head)
 
 
 def const(x):
@@ -89,20 +112,25 @@ default if any of the keys are missing
     if not args:
         return const(None)
 
-    # compose each p(get, key) partial using reduce
-    return reduce(
-        lambda f, key: c(p(get, key), f),
-        args[1:],
-        p(get, args[0]))
+    # thread a list of get(key, obj) calls
+    return t(imap(lambda key: p(get, key), args))
 
 
 ###
 ## lazy evaluating functions
 ###
 from itertools import (
-    imap, ifilter, cycle as icycle, repeat as irepeat,
-    dropwhile as idropwhile, izip
+    izip,
+    imap,
+    ifilter,
+    islice,
+    cycle as icycle,
+    repeat as irepeat,
+    dropwhile as idropwhile,
+    takewhile as itakewhile,
+    compress as icompress,
 )
+import itertools
 
 
 def iand(iterable):
@@ -138,28 +166,22 @@ def iconcat_map(f, iterable):
 
 
 def itake(n, iterable):
-    for item in iterable:
-        if n > 0:
-            yield item
-            n = n - 1
-        else:
-            return
+    return islice(iterable, n)
 
 
-def itake_while(predicate, iterable):
-    for item in iterable:
-        if predicate(item):
-            yield item
-        else:
-            return
+def ifirst(iterable):
+    try:
+        return iter(iterable).next()
+    except StopIteration:
+        return None
+
+
+def irest(iterable):
+    return idrop(1, iterable)
 
 
 def idrop(n, iterable):
-    for item in iterable:
-        if n > 0:
-            n = n - 1
-        else:
-            yield item
+    return itertools.islice(iterable, n, None)
 
 
 def isplit_at(i, iterable):
@@ -171,9 +193,44 @@ def izip_with(f, iterable1, iterable2):
     return imap(f, iterable1, iterable2)
 
 
+def ichain(iterables):
+    return itertools.chain.from_iterable(iterables)
+
+
+def igroupby(keyfunc, iterable):
+    return itertools.groupby(iterable, keyfunc)
+
+####
+## Reducers
+####
+
+
+def rsorted(keyfunc, iterable, **kwargs):
+    return sorted(iterable, key=keyfunc, **kwargs)
+
+
 ####
 ## Predicates
 ####
+def binfunc(f):
+    """turns a binary function into an unary function which takes a pair
+
+    >>> points = [(1,2), (110, 320)]
+    >>> getx = binfunc(lambda x,y: x)
+    >>> gety = binfunc(lambda x,y: y)
+
+    >>> list(imap(getx, points))
+    [1, 110]
+
+    >>> list(imap(gety, points))
+    [2, 320]
+"""
+    def inner(pair):
+        x,y = pair
+        return f(x,y)
+    return inner
+
+
 def even(x):
     return mod(x, 2) == 0
 

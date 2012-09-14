@@ -117,6 +117,28 @@ class TestCompose(TestCase):
                          add_three_and_double2(2))
 
 
+class TestThread(TestCase):
+
+    def test(self):
+        t = functools2.t
+        p = functools2.p
+        mul = functools2.mul
+        add = functools2.add
+
+        add_three_and_double1 = t([
+            lambda x: x + 3,
+            lambda x: x * 2])
+
+        add_three_and_double2 = t([p(add, 3),
+                                   p(mul, 2)])
+
+        self.assertEqual(10,
+                         add_three_and_double1(2))
+
+        self.assertEqual(10,
+                         add_three_and_double2(2))
+
+
 class TestIAND(TestCase):
     def test(self):
         def crashing_gen():
@@ -252,7 +274,7 @@ class TestTake(TestCase):
 class TestTakeWhile(TestCase):
 
     def test(self):
-        itake_while = functools2.itake_while
+        itakewhile = functools2.itakewhile
 
         def crashing_gen():
             yield 1
@@ -264,7 +286,7 @@ class TestTakeWhile(TestCase):
 
         self.assertEqual(
             [1,2,3],
-            list(itake_while(
+            list(itakewhile(
                 lambda x: x < 4,
                 crashing_gen())))
 
@@ -327,17 +349,71 @@ class TestGet(TestCase):
 class TestGetter(TestCase):
 
     def test(self):
+        get = functools2.get
+        t   = functools2.t
+        p   = functools2.p
+
         get_address = functools2.getter("name")
         self.assertEqual("Eric",
                          get_address({"name": "Eric"}))
 
-        get_city = functools2.getter("addresses", 0, "city")
+        get_city1 = t([
+            p(get, "addresss"),
+            p(get, 0),
+            p(get, "city")])
+
+
+        get_city2 = functools2.getter("addresses", 0, "city")
 
         self.assertEqual("Reston",
-                         get_city({"addresses": [{"city": "Reston"}]}))
+                         get_city1({"addresses": [{"city": "Reston"}]}))
+
+
+        self.assertEqual("Reston",
+                         get_city2({"addresses": [{"city": "Reston"}]}))
 
         self.assertEqual(None,
-                         get_city({"addresses": []}))
+                         get_city2({"addresses": []}))
 
         self.assertEqual(None,
-                         get_city({"addresses": [{}]}))
+                         get_city2({"addresses": [{}]}))
+
+
+class TestIChain(TestCase):
+    def test(self):
+        self.assertEqual([1, 2, 3, 4],
+                         list(
+                             functools2.ichain(
+                                 [
+                                     xrange(1, 3),
+                                     xrange(3, 5)
+                                 ])))
+
+
+class TestICompress(TestCase):
+    def test(self):
+        self.assertEqual(["A","C","E","F"],
+                         list(
+                             functools2.icompress("ABCDEF",
+                                                  [1, 0, 1, 0, 1, 1])))
+
+
+class TestIGroupBy(TestCase):
+    def test(self):
+        imap     = functools2.imap
+        igroupby = functools2.igroupby
+        binfunc  = functools2.binfunc
+        odd      = functools2.odd
+        items    = [1,3,5,2,4,6] # items must be sorted
+        grouped  = igroupby(odd, items)
+
+
+        resolved = list(imap(
+            binfunc(
+                lambda k, g: (k, list(g))),
+            grouped))
+
+        self.assertEqual([
+            (True, [1, 3, 5]),
+            (False, [2, 4, 6]),
+        ], resolved)
