@@ -22,10 +22,10 @@ from operator import (
 import operator
 
 
-def quot(x,y):
+def quot(x, y):
     """returns the quotient after dividing the its first integral
     argument by its second integral argument"""
-    return operator.floordiv(x,y)
+    return operator.floordiv(x, y)
 
 
 def in_(item, container):
@@ -44,7 +44,7 @@ def not_in(item, container):
 from functools import partial as p
 
 
-def c(f,g):
+def c(f, g):
     return lambda x: f(g(x))
 
 
@@ -53,11 +53,24 @@ def const(x):
 
 
 def flip(f):
-    return lambda x,y: f(y,x)
+    return lambda x, y: f(y, x)
 
 
 def identity(x):
     return x
+
+
+def get(key, obj):
+    if obj is None:
+        return None
+    # treat set membership differently
+    if hasattr(obj, "issubset") and key in obj:
+        return key
+    # handle lists and dicts
+    try:
+        return obj[key]
+    except (KeyError, IndexError, TypeError):
+        return None
 
 
 def getter(*args):
@@ -73,19 +86,22 @@ default if any of the keys are missing
     >>> list(get_cities(addresses))
     ["Reston", "Herndon", None]
     """
+    if not args:
+        return const(None)
 
-    def inner(val):
-        if not args:
-            return None
+    # start with a partial of the first key
+    first = p(get, args[0])
+    # if we don't have any more keys,
+    # return the first partial
+    if len(args) == 1:
+        return first
+    else:
+        # if we have more keys,
+        # compose get partials using the other keys
+        return reduce(
+            lambda f, key: c(p(get, key), f),
+            args[1:], first)
 
-        ret = val
-        for key in args:
-            try:
-                ret = ret[key]
-            except (KeyError, IndexError):
-                return None
-        return ret
-    return inner
 
 ###
 ## lazy evaluating functions
@@ -162,14 +178,15 @@ def izip_with(f, iterable1, iterable2):
     return imap(f, iterable1, iterable2)
 
 
-
 ####
 ## Predicates
 ####
 def even(x):
     return mod(x, 2) == 0
 
+
 odd = c(not_, even)
+
 
 def is_none(x):
     return x is None

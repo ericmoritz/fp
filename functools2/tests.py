@@ -294,9 +294,43 @@ class TestZipWith(TestCase):
                            xrange(6, 11))))
 
 
+class TestGet(TestCase):
+
+    def test_missing(self):
+        self.assertEqual(None,
+                         functools2.get("test", None))
+
+        self.assertEqual(None,
+                         functools2.get("test", {})),
+
+        self.assertEqual(None,
+                         functools2.get("test", [])),
+
+        self.assertEqual(None,
+                         functools2.get(0, [])),
+
+        self.assertEqual(None,
+                         functools2.get("a", set())),
+
+
+    def test_exists(self):
+        self.assertEqual("val",
+                         functools2.get("test", {"test": "val"})),
+
+        self.assertEqual("test",
+                         functools2.get(0, ["test"])),
+
+        self.assertEqual("a",
+                         functools2.get("a", set("a"))),
+
+
 class TestGetter(TestCase):
 
     def test(self):
+        get_address = functools2.getter("name")
+        self.assertEqual("Eric",
+                         get_address({"name": "Eric"}))
+
         get_city = functools2.getter("addresses", 0, "city")
 
         self.assertEqual("Reston",
