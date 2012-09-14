@@ -352,25 +352,25 @@ class TestGetter(TestCase):
         get = functools2.get
         t   = functools2.t
         p   = functools2.p
-
-        get_address = functools2.getter("name")
-        self.assertEqual("Eric",
-                         get_address({"name": "Eric"}))
+        c   = functools2.c
 
         get_city1 = t([
-            p(get, "addresss"),
+            p(get, "addresses"),
             p(get, 0),
             p(get, "city")])
-
 
         get_city2 = functools2.getter("addresses", 0, "city")
 
         self.assertEqual("Reston",
                          get_city1({"addresses": [{"city": "Reston"}]}))
 
-
         self.assertEqual("Reston",
                          get_city2({"addresses": [{"city": "Reston"}]}))
+
+        get_address = functools2.getter("name")
+
+        self.assertEqual("Eric",
+                         get_address({"name": "Eric"}))
 
         self.assertEqual(None,
                          get_city2({"addresses": []}))

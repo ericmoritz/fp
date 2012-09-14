@@ -109,11 +109,9 @@ default if any of the keys are missing
     >>> list(get_cities(addresses))
     ["Reston", "Herndon", None]
     """
-    if not args:
-        return const(None)
-
     # thread a list of get(key, obj) calls
-    return t(imap(lambda key: p(get, key), args))
+    get_functions = [p(get, key) for key in args]
+    return t(get_functions)
 
 
 ###
@@ -170,10 +168,7 @@ def itake(n, iterable):
 
 
 def ifirst(iterable):
-    try:
-        return iter(iterable).next()
-    except StopIteration:
-        return None
+    return iter(iterable).next()
 
 
 def irest(iterable):
