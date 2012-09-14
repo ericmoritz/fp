@@ -89,18 +89,11 @@ default if any of the keys are missing
     if not args:
         return const(None)
 
-    # start with a partial of the first key
-    first = p(get, args[0])
-    # if we don't have any more keys,
-    # return the first partial
-    if len(args) == 1:
-        return first
-    else:
-        # if we have more keys,
-        # compose get partials using the other keys
-        return reduce(
-            lambda f, key: c(p(get, key), f),
-            args[1:], first)
+    # compose each p(get, key) partial using reduce
+    return reduce(
+        lambda f, key: c(p(get, key), f),
+        args[1:],
+        p(get, args[0]))
 
 
 ###
