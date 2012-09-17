@@ -3,7 +3,7 @@ programming inspired tools to Python.
 
 # Goals
 
- * Provide the tools to decoratively compose functions using
+ * Provide the functions to make compositions of functions using
    `partial`, `compose` and `thread` seen often in FP.
  * Provide a collection of useful predicates and operator functions to
    use with higher-order functions
@@ -25,7 +25,7 @@ function.
 
 Partials enable you to construct functions with constant arguments.
 
-    >>> from functools2 import mul, p
+    >>> from fp import mul, p
     >>> times_two = p(mul, 2) # multiply x by two
     >>> times_two(5)
     10
@@ -44,7 +44,7 @@ passes; list() is needed to resolve the generator to a list.
 Partial allows you to map function which normally takes more than one
 argument:
 
-    from functools2 import imap, p
+    from fp import imap, p
     from datetime import date
     import calendar
     
@@ -65,7 +65,7 @@ composition of multiple unary functions.
 
 Here's how you would express (x + 3) * 2:
 
-     from functools2 import mul, add, p, c
+     from fp import mul, add, p, c
      
      add_three_and_double = c(p(mul, 2), p(add, 3))
      assert add_three_and_double(2) == 10)
@@ -106,7 +106,7 @@ similar job as c() but is left associative.
 
 ## Operators
 
-Every operator in Python will be mirrored in `functools2`.  In most
+Every operator in Python will be mirrored in `fp`.  In most
 cases these operators are simply mirrors of the function in the
 `operator` module.
 
@@ -161,7 +161,7 @@ going to be less error prone because you're simply describing
 operations over a list rather than programming the operations over the
 list.
 
-All generators defined in `functools2` start with an "i" to tell you
+All generators defined in `fp` start with an "i" to tell you
 than it lazily operates over an iterable.  These generators all take
 an iterator as there final argument to enable the use of p() to
 produce partials in functional compositions.

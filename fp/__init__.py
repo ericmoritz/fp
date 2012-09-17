@@ -30,7 +30,6 @@ def quot(x, y):
 
 
 def in_(item, container):
-
     """This mimics the signature of Haskell's `elem` function and the
 Python "in" operator."""
     return item in container
@@ -134,6 +133,16 @@ default if any of the keys are missing
     get_functions = [p(get, key) for key in args]
     return t(get_functions)
 
+
+def kwunary(func, *keys):
+    if keys:
+        def inner(dct):
+            kwargs = {k:dct[k] for k in keys}
+            return func(**kwargs)
+    else:
+        def inner(dct):
+            return func(**dct)
+    return inner
 
 ###
 ## generators
