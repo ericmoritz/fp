@@ -38,6 +38,8 @@ Python "in" operator."""
 
 def not_in(item, container):
     return item not in container
+
+
 ###
 # Partials
 ###
@@ -83,6 +85,25 @@ def identity(x):
     return x
 
 
+def binfunc(f):
+    """turns a binary function into an unary function which takes a pair
+
+    >>> points = [(1,2), (110, 320)]
+    >>> getx = binfunc(lambda x,y: x)
+    >>> gety = binfunc(lambda x,y: y)
+
+    >>> list(imap(getx, points))
+    [1, 110]
+
+    >>> list(imap(gety, points))
+    [2, 320]
+    """
+    def inner(pair):
+        x,y = pair
+        return f(x,y)
+        return inner
+
+
 def get(key, obj):
     if obj is None:
         return None
@@ -115,7 +136,7 @@ default if any of the keys are missing
 
 
 ###
-## lazy evaluating functions
+## generators
 ###
 from itertools import (
     izip,
@@ -205,25 +226,12 @@ def rsorted(keyfunc, iterable, **kwargs):
 
 
 ####
+## Partials
+####
+
+####
 ## Predicates
 ####
-def binfunc(f):
-    """turns a binary function into an unary function which takes a pair
-
-    >>> points = [(1,2), (110, 320)]
-    >>> getx = binfunc(lambda x,y: x)
-    >>> gety = binfunc(lambda x,y: y)
-
-    >>> list(imap(getx, points))
-    [1, 110]
-
-    >>> list(imap(gety, points))
-    [2, 320]
-"""
-    def inner(pair):
-        x,y = pair
-        return f(x,y)
-    return inner
 
 
 def even(x):
