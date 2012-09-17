@@ -25,18 +25,16 @@ function.
 
 Partials enable you to construct functions with constant arguments.
 
-    >>> from fp import mul, p
-    >>> times_two = p(mul, 2) # multiply x by two
-    >>> times_two(5)
-    10
+    from fp import mul, p
+    times_two = p(mul, 2) # multiply x by two
+    assert times_two(5) == 10
 
 Partial allows you to construct predicates which are self documenting
 
-   >>> from functool2 import ifilter, p, eq
-   >>> is_eric = p(eq, "Eric Moritz")
-   >>> only_eric = ifilter(is_eric, ["Eric Moritz", "John Doe"])
-   >>> list(only_eric)
-   ["Eric Moritz"]
+   from functool2 import ifilter, p, eq
+   is_eric = p(eq, "Eric Moritz")
+   only_eric = ifilter(is_eric, ["Eric Moritz", "John Doe"])
+   assert list(only_eric) == ["Eric Moritz"]
 
 `ifilter` is a generator which only yields values which the predicate
 passes; list() is needed to resolve the generator to a list.
