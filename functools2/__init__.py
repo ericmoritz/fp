@@ -101,7 +101,7 @@ def binfunc(f):
     def inner(pair):
         x,y = pair
         return f(x,y)
-        return inner
+    return inner
 
 
 def get(key, obj):
