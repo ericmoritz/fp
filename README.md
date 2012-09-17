@@ -16,10 +16,10 @@ programming inspired tools to Python.
 
 ### Partial
 
-`functools` provides the `p(f, *args, **kwargs)` function which
+`fp` provides the `p(f, *args, **kwargs)` function which
 will create a partial application of the function `f`.
 
-The `p` function is implemented using the built-in functools.partial
+The `p` function is implemented using the built-in fp.partial
 function bundled with Python and is simply a shorten alias to that
 function.
 
@@ -31,10 +31,10 @@ Partials enable you to construct functions with constant arguments.
 
 Partial allows you to construct predicates which are self documenting
 
-   from functool2 import ifilter, p, eq
-   is_eric = p(eq, "Eric Moritz")
-   only_eric = ifilter(is_eric, ["Eric Moritz", "John Doe"])
-   assert list(only_eric) == ["Eric Moritz"]
+    from fp import ifilter, p, eq
+    is_eric = p(eq, "Eric Moritz")
+    only_eric = ifilter(is_eric, ["Eric Moritz", "John Doe"])
+    assert list(only_eric) == ["Eric Moritz"]
 
 `ifilter` is a generator which only yields values which the predicate
 passes; list() is needed to resolve the generator to a list.
