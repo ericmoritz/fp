@@ -73,19 +73,6 @@ class TestConcat(TestCase):
                          fp.concat("abc", "def"))
 
 
-class TestContains(TestCase):
-
-    def test(self):
-        self.assertEquals(True,
-                          fp.contains([1, 2], 1))
-
-        self.assertEquals(True,
-                          fp.contains({1, 2}, 2))
-
-        self.assertEquals(True,
-                          fp.contains({"one": 1}, "one"))
-
-
 # mimics the signature of Python's in operator
 class TestIn_(TestCase):
 
@@ -157,7 +144,6 @@ class TestCaseOp(TestCase):
             sanitize_url("test.htm")
         )
 
-
         # describe a case function using a list of rules rather than
         # arguments
         rules = [
@@ -185,10 +171,10 @@ class TestCaseOp(TestCase):
         )
 
 
-
 ##
 # Partials
 ##
+
 
 class TestPartial(TestCase):
 
@@ -201,7 +187,7 @@ class TestPartial(TestCase):
 class TestPartialPrepend(TestCase):
     def test(self):
         def example(a, b, op=fp.sub):
-            return op(a,b)
+            return op(a, b)
 
         sub_two = fp.pp(example, 2)
 
@@ -262,25 +248,25 @@ class TestIChunk(TestCase):
     def test_fillvalue(self):
         self.assertEqual(
             [
-                (1,2,3),
-                (4,5,6),
-                (7,8,9),
+                (1, 2, 3),
+                (4, 5, 6),
+                (7, 8, 9),
                 (10, )
             ],
             list(fp.ichunk(3, xrange(1, 11)))
         )
 
-
     def test_fillvalue(self):
         self.assertEqual(
             [
-                (1,2,3),
-                (4,5,6),
-                (7,8,9),
-                (10,0,0)
+                (1, 2, 3),
+                (4, 5, 6),
+                (7, 8, 9),
+                (10, 0, 0)
             ],
             list(fp.ichunk(3, xrange(1, 11), fillvalue=0))
         )
+
 
 class TestIAND(TestCase):
     def test(self):
@@ -376,7 +362,7 @@ class TestDrop(TestCase):
 
     def test(self):
         self.assertEqual(
-            [3,4,5],
+            [3, 4, 5],
             list(fp.idrop(3, range(6))))
 
 
@@ -393,13 +379,14 @@ class TestDropWhile(TestCase):
                 lambda x: x < 5,
                 xrange(0, 11))))
 
+
 class TestTake(TestCase):
 
     def test(self):
         itake = fp.itake
 
         self.assertEqual(
-            [1,2,3],
+            [1, 2, 3],
             list(
                 itake(3, xrange(1, 10))))
 
@@ -418,7 +405,7 @@ class TestTakeWhile(TestCase):
             yield 5
 
         self.assertEqual(
-            [1,2,3],
+            [1, 2, 3],
             list(itakewhile(
                 lambda x: x < 4,
                 crashing_gen())))
@@ -467,7 +454,6 @@ class TestGet(TestCase):
         self.assertEqual(None,
                          fp.get("a", set())),
 
-
     def test_exists(self):
         self.assertEqual("val",
                          fp.get("test", {"test": "val"})),
@@ -483,9 +469,9 @@ class TestGetter(TestCase):
 
     def test(self):
         get = fp.get
-        t   = fp.t
-        p   = fp.p
-        c   = fp.c
+        t = fp.t
+        p = fp.p
+        c = fp.c
 
         get_city1 = t([
             p(get, "addresses"),
@@ -525,21 +511,22 @@ class TestIChain(TestCase):
 
 class TestICompress(TestCase):
     def test(self):
-        self.assertEqual(["A","C","E","F"],
+        self.assertEqual(["A", "C", "E", "F"],
                          list(
                              fp.icompress("ABCDEF",
-                                                  [1, 0, 1, 0, 1, 1])))
+                                          [1, 0, 1, 0, 1, 1])))
 
 
 class TestIGroupBy(TestCase):
     def test(self):
-        imap     = fp.imap
-        igroupby = fp.igroupby
-        binfunc  = fp.binfunc
-        odd      = fp.odd
-        items    = [1,3,5,2,4,6] # items must be sorted
-        grouped  = igroupby(odd, items)
+        from fp import (
+            imap,
+            igroupby,
+            binfunc,
+            odd)
 
+        items = [1, 3, 5, 2, 4, 6]  # items must be sorted
+        grouped = igroupby(odd, items)
 
         resolved = list(imap(
             binfunc(
@@ -550,6 +537,7 @@ class TestIGroupBy(TestCase):
             (True, [1, 3, 5]),
             (False, [2, 4, 6]),
         ], resolved)
+
 
 class TestKWUnary(TestCase):
     def test_simple(self):
