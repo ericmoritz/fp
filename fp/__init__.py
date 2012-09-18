@@ -281,10 +281,6 @@ def rsorted(keyfunc, iterable, **kwargs):
 
 
 ####
-## Partials
-####
-
-####
 ## Predicates
 ####
 
