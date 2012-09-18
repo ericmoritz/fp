@@ -2,6 +2,10 @@ from unittest import TestCase
 import fp
 
 
+##
+# Operator tests
+##
+
 class TestAdd(TestCase):
 
     def test(self):
@@ -93,8 +97,6 @@ class TestIn_(TestCase):
                           fp.in_("one", {"one": 1}))
 
 
-
-
 class TestAnd(TestCase):
 
     def test(self):
@@ -124,12 +126,82 @@ class TestXor(TestCase):
                       fp.xor(False, False))
 
 
+class TestCaseOp(TestCase):
+    def test(self):
+        import re
+        from fp import p, pp, c, case, identity, concat
+
+        add_domain = p(concat, "https://example.com/")
+        make_secure = p(re.sub, r"^http://", r"https://")
+
+        sanitize_url = case(
+            pp(str.startswith, "http://"), make_secure,
+
+            pp(str.startswith, "/"), c(add_domain, pp(str.lstrip, "/")),
+
+            True, add_domain
+        )
+        self.assertEqual(
+            "https://example.com/",
+            sanitize_url("http://example.com/"))
+
+        self.assertEqual(
+            "https://example.com/test.htm",
+            sanitize_url("/test.htm")
+        )
+        self.assertEqual(
+            "https://example.com/test.htm",
+            sanitize_url("test.htm")
+        )
+
+
+        # describe a case function using a list of rules rather than
+        # arguments
+        rules = [
+            pp(str.startswith, "http://"), make_secure,
+            pp(str.startswith, "/"), c(add_domain, pp(str.lstrip, "/")),
+            True, add_domain
+        ]
+        sanitize_url2 = case(rules)
+
+        self.assertEqual(
+            "https://example.com/",
+            sanitize_url2("http://example.com/"))
+
+        self.assertEqual(
+            "https://example.com/test.htm",
+            sanitize_url2("/test.htm")
+        )
+
+        self.assertEqual(
+            "https://example.com/test.htm",
+            sanitize_url2("test.htm")
+        )
+
+
+
+##
+# Partials
+##
+
 class TestPartial(TestCase):
 
     def test(self):
         add_three = fp.p(fp.add, 3)
 
         self.assertEqual(6, add_three(3))
+
+
+class TestPartialPrepend(TestCase):
+    def test(self):
+        def example(a, b, op=fp.sub):
+            return op(a,b)
+
+        sub_two = fp.pp(example, 2)
+
+        self.assertEqual(4, sub_two(6))
+        self.assertEqual(-2, sub_two(0))
+        self.assertEqual(20, sub_two(10, op=fp.mul))
 
 
 class TestCompose(TestCase):
@@ -176,6 +248,33 @@ class TestThread(TestCase):
         self.assertEqual(10,
                          add_three_and_double2(2))
 
+
+####
+## Generators
+####
+class TestIChunk(TestCase):
+    def test_fillvalue(self):
+        self.assertEqual(
+            [
+                (1,2,3),
+                (4,5,6),
+                (7,8,9),
+                (10, )
+            ],
+            list(fp.ichunk(3, xrange(1, 11)))
+        )
+
+
+    def test_fillvalue(self):
+        self.assertEqual(
+            [
+                (1,2,3),
+                (4,5,6),
+                (7,8,9),
+                (10,0,0)
+            ],
+            list(fp.ichunk(3, xrange(1, 11), fillvalue=0))
+        )
 
 class TestIAND(TestCase):
     def test(self):
@@ -257,16 +356,6 @@ class TestIAdd(TestCase):
 
         self.assertEqual([1, 2, 3, 4],
                          iadd([[1, 2], [3, 4]]))
-
-
-class TestIConcatMap(TestCase):
-
-    def test(self):
-        iconcat_map = fp.iconcat_map
-
-        self.assertEqual(
-            "1234",
-            iconcat_map(str, [1,2, 3,4]))
 
 
 class TestConst(TestCase):

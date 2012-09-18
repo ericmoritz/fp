@@ -5,6 +5,11 @@ Provides a number of operator and higher-order functions for FP fun
 """
 
 ####
+# atoms
+####
+undefined = object()
+
+####
 ## Operators
 ####
 import sys
@@ -19,8 +24,27 @@ from operator import (
 
     # comparison
     lt, le, eq, ne, gt, ge
+
 )
 import operator
+
+
+def case(*args):
+    # If the args has a length of one, args[0] is an iterator
+    if len(args) == 1:
+        args = args[0]
+    # if args is not a length of one, its len has to be even
+    else:
+        assert even(len(args)), "uneven case expression"
+
+    def inner(value):
+        for pred, f in ichunk(2, args):
+            if pred is True:
+                return f(value)
+            elif pred(value):
+                return f(value)
+        return None
+    return inner
 
 
 def quot(x, y):
@@ -44,6 +68,17 @@ def not_in(item, container):
 ###
 
 from functools import partial as p
+
+
+def pp(f, *args0, **kwargs0):
+    """Creates a partial where arguments are prepended to the partial
+args"""
+
+    def inner(*args1, **kwargs1):
+        args = args1 + args0
+        kwargs = dict(kwargs0, **kwargs1)
+        return f(*args, **kwargs)
+    return inner
 
 
 def c(f, g):
@@ -73,7 +108,7 @@ def t(fs):
 
 
 def const(x):
-    return lambda: x
+    return lambda *args, **kwargs: x
 
 
 def flip(f):
@@ -149,6 +184,7 @@ def kwunary(func, *keys):
 ###
 from itertools import (
     izip,
+    izip_longest,
     imap,
     ifilter,
     islice,
@@ -189,10 +225,6 @@ def iadd(iterable):
     return reduce(add, iterable)
 
 
-def iconcat_map(f, iterable):
-    return reduce(add, (imap(f, iterable)))
-
-
 def itake(n, iterable):
     return islice(iterable, n)
 
@@ -224,6 +256,15 @@ def ichain(iterables):
 
 def igroupby(keyfunc, iterable):
     return itertools.groupby(iterable, keyfunc)
+
+
+def ichunk(size, iterable, fillvalue=undefined):
+    args = [iter(iterable)] * size
+    if fillvalue is undefined:
+        return izip(*args)
+    else:
+        return izip_longest(fillvalue=fillvalue, *args)
+
 
 ####
 ## Reducers
