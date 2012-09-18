@@ -19,7 +19,7 @@ programming inspired tools to Python.
 `fp` provides the `p(f, *args, **kwargs)` function which
 will create a partial application of the function `f`.
 
-The `p` function is implemented using the built-in fp.partial
+The `p` function is implemented using the built-in `functools.partial`
 function bundled with Python and is simply a shorten alias to that
 function.
 
@@ -36,17 +36,17 @@ Partial allows you to construct predicates which are self documenting
     only_eric = ifilter(is_eric, ["Eric Moritz", "John Doe"])
     assert list(only_eric) == ["Eric Moritz"]
 
-`ifilter` is a generator which only yields values which the predicate
-passes; list() is needed to resolve the generator to a list.
+`ifilter` is a generator for which only yields values which the
+predicate passes; list() is needed to resolve the generator to a list.
 
-Partial allows you to map function which normally takes more than one
-argument:
+Partial allows you to map a functions which normally takes more than
+one argument:
 
     from fp import imap, p
     from datetime import date
     import calendar
     
-    
+
     def days_in_month(year, month):
          _, days_in_month = calendar.monthrange(year, month)
          return imap(
@@ -61,21 +61,21 @@ Another function that is found in functional programming is a compose
 function.  This enables the creation of a function which is the
 composition of multiple unary functions.
 
-Here's how you would express (x + 3) * 2:
+Here's how you would express `(x + 3) * 2`:
 
      from fp import mul, add, p, c
      
      add_three_and_double = c(p(mul, 2), p(add, 3))
-     assert add_three_and_double(2) == 10)
+     assert add_three_and_double(2) == 10
 
 
-c() is right associative so p(add, 3) is applied first and then
-p(mul, 2) is applied.
+`c` is right associative so `p(add, 3)` is applied first and then
+`p(mul, 2)` is applied.
 
 
 This is obviously a terrible example of what is essentially
-`lambda x: (x + 3) * 2` but becomes powerful with more complex
-compositions which would look like:
+`lambda x: (x + 3) * 2` but its power is shown when used with more complex
+compositions:
 
 
      # buggy way
@@ -88,19 +88,24 @@ compositions which would look like:
      def dosomething(x):
          return do3(do2(do1(x)))
         
-     # simple way
-     dosomething = c(do2, c(do2, do1))
+     # the fp way
+     dosomething = c(do3, c(do2, do1))
 
-Doing work-flows with compose is confusing because it is right
-associative.  For that there is the thread function
+However doing workflows with compose is not as natural is it could
+be. This is where the functional thread comes into play.
 
-### Thread
+### Functional threads
 
-The final function composition is the thread function.  It does a
-similar job as c() but is left associative.
+Not to be confused with Thread(), a functional thread composes a
+single function from sequence of functions.  It does a similar job as
+`c` but is left associative.
+
 
     dosomething = t([do1, do2, do3])
     
+    # both expressions have the same result
+    assert do3(do2(do1(value))) == dosomething()
+
 
 ## Operators
 
@@ -116,7 +121,7 @@ to lazily compose these primitives so that iteration is occurs N-times
 rather than N*M-times where M is the number of things happening to
 those sequences.
 
-Here is an example in Python:
+Here is an example of the wrong way in Python:
 
     x_times_two = [x*2 for x in xrange(10)]
     x_plus_one  = [x+1 for x in x_times_two]
@@ -130,8 +135,8 @@ same result which only does 10 iterations:
     x_times_two = (x*2 for x in xrange(10))
     x_plus_one  = [x+1 for x in x_times_two]
     
-Now, `x_times_two` is only a temporary variable, so we could rewrite
-this algorithm using t():
+Now, `x_times_two` is only a temporary variable and temporary
+variables are error prone. We could rewrite this algorithm using t():
 
     # create our thread of generators
     itimestwo_plus_one  = t([
@@ -141,9 +146,7 @@ this algorithm using t():
     
     # apply our algorithm over xrange(10) 
     x_times_two_plus_one = list(
-        itimestwo_plus_one(
-            xrange(10)
-        )
+        itimestwo_plus_one(xrange(10))
     )
     
 This functional thread can be implemented using a partial application
@@ -162,4 +165,4 @@ list.
 All generators defined in `fp` start with an "i" to tell you
 than it lazily operates over an iterable.  These generators all take
 an iterator as there final argument to enable the use of p() to
-produce partials in functional compositions.
+produce partials to be used in functional compositions.
