@@ -135,11 +135,11 @@ class TestCaseOp(TestCase):
         make_secure = p(re.sub, r"^http://", r"https://")
 
         sanitize_url = case(
-            pp(str.startswith, "http://"), make_secure,
+            (pp(str.startswith, "http://"), make_secure),
 
-            pp(str.startswith, "/"), c(add_domain, pp(str.lstrip, "/")),
+            (pp(str.startswith, "/"), c(add_domain, pp(str.lstrip, "/"))),
 
-            True, add_domain
+            (True, add_domain),
         )
         self.assertEqual(
             "https://example.com/",
@@ -158,9 +158,12 @@ class TestCaseOp(TestCase):
         # describe a case function using a list of rules rather than
         # arguments
         rules = [
-            pp(str.startswith, "http://"), make_secure,
-            pp(str.startswith, "/"), c(add_domain, pp(str.lstrip, "/")),
-            True, add_domain
+            (pp(str.startswith, "http://"),
+             make_secure),
+            (pp(str.startswith, "/"),
+             c(add_domain, pp(str.lstrip, "/"))),
+            (True,
+             add_domain),
         ]
         sanitize_url2 = case(rules)
 

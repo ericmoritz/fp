@@ -33,12 +33,9 @@ def case(*rules):
     # If the args has a length of one, args[0] is an iterator
     if len(rules) == 1:
         rules = rules[0]
-    # if args is not a length of one, its len has to be even
-    else:
-        assert even(len(rules)), "uneven case expression"
 
     def inner(*args, **kwargs):
-        for pred, f in ichunk(2, rules):
+        for pred, f in rules:
             if pred is True:
                 return f(*args, **kwargs)
             elif pred(*args, **kwargs):
