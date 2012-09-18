@@ -73,20 +73,6 @@ class TestConcat(TestCase):
                          fp.concat("abc", "def"))
 
 
-# mimics the signature of Python's in operator
-class TestIn_(TestCase):
-
-    def test(self):
-        self.assertEquals(True,
-                          fp.in_(1, [1, 2]))
-
-        self.assertEquals(True,
-                          fp.in_(2, {1, 2}))
-
-        self.assertEquals(True,
-                          fp.in_("one", {"one": 1}))
-
-
 class TestAnd(TestCase):
 
     def test(self):
@@ -116,18 +102,101 @@ class TestXor(TestCase):
                       fp.xor(False, False))
 
 
+class TestOr(TestCase):
+
+    def test(self):
+        self.assertEqual(15,
+                         fp.or_(8, 7))
+
+        self.assertEqual(True,
+                         fp.or_(True, False))
+
+        self.assertEqual(True,
+                         fp.or_(True, True))
+
+        self.assertEqual(False,
+                         fp.or_(False, False))
+
+
+class TestInvert(TestCase):
+
+    def test(self):
+        self.assertEqual(-1,
+                         fp.invert(0))
+
+
+class TestNot(TestCase):
+
+    def test(self):
+        self.assertEqual(False, fp.not_(True))
+        self.assertEqual(True, fp.not_(False))
+
+
+class TestLT(TestCase):
+
+    def test(self):
+        self.assertEqual(True, fp.lt(5, 10))
+        self.assertEqual(False, fp.lt(10, 5))
+        self.assertEqual(False, fp.lt(5, 5))
+
+
+class TestLE(TestCase):
+
+    def test(self):
+        self.assertEqual(True, fp.le(5, 10))
+        self.assertEqual(False, fp.le(10, 5))
+        self.assertEqual(True, fp.le(5, 5))
+
+
+class TestEq(TestCase):
+
+    def test(self):
+        self.assertEqual(True, fp.eq(5, 5))
+        self.assertEqual(False, fp.eq(10, 5))
+
+
+class TestGT(TestCase):
+
+    def test(self):
+        self.assertEqual(True, fp.gt(10, 5))
+        self.assertEqual(False, fp.gt(5, 10))
+        self.assertEqual(False, fp.gt(5, 5))
+
+
+class TestGE(TestCase):
+
+    def test(self):
+        self.assertEqual(True, fp.ge(10, 5))
+        self.assertEqual(False, fp.ge(5, 10))
+        self.assertEqual(True, fp.ge(5, 5))
+
+
+# mimics the signature of Python's in operator
+class TestIn_(TestCase):
+
+    def test(self):
+        self.assertEquals(True,
+                          fp.in_(1, [1, 2]))
+
+        self.assertEquals(True,
+                          fp.in_(2, {1, 2}))
+
+        self.assertEquals(True,
+                          fp.in_("one", {"one": 1}))
+
+
 class TestCaseOp(TestCase):
     def test(self):
         import re
-        from fp import p, pp, c, case, identity, concat
+        from fp import p, ap, c, case, identity, concat
 
         add_domain = p(concat, "https://example.com/")
         make_secure = p(re.sub, r"^http://", r"https://")
 
         sanitize_url = case(
-            (pp(str.startswith, "http://"), make_secure),
+            (ap(str.startswith, "http://"), make_secure),
 
-            (pp(str.startswith, "/"), c(add_domain, pp(str.lstrip, "/"))),
+            (ap(str.startswith, "/"), c(add_domain, ap(str.lstrip, "/"))),
 
             (True, add_domain),
         )
@@ -147,10 +216,10 @@ class TestCaseOp(TestCase):
         # describe a case function using a list of rules rather than
         # arguments
         rules = [
-            (pp(str.startswith, "http://"),
+            (ap(str.startswith, "http://"),
              make_secure),
-            (pp(str.startswith, "/"),
-             c(add_domain, pp(str.lstrip, "/"))),
+            (ap(str.startswith, "/"),
+             c(add_domain, ap(str.lstrip, "/"))),
             (True,
              add_domain),
         ]
@@ -189,7 +258,7 @@ class TestPartialPrepend(TestCase):
         def example(a, b, op=fp.sub):
             return op(a, b)
 
-        sub_two = fp.pp(example, 2)
+        sub_two = fp.ap(example, 2)
 
         self.assertEqual(4, sub_two(6))
         self.assertEqual(-2, sub_two(0))
@@ -241,6 +310,42 @@ class TestThread(TestCase):
                          add_three_and_double2(2))
 
 
+class TestConst(TestCase):
+
+    def test(self):
+        say_hi = fp.const("hi")
+
+        self.assertEqual("hi",
+                         say_hi(1, a=1))
+
+
+class TestFlip(TestCase):
+
+    def test(self):
+        def f(x, y):
+            return x, y
+
+        self.assertEqual((2,1),
+                         fp.flip(f)(1,2))
+
+
+class TestIdentity(TestCase):
+
+    def test(self):
+        self.assertEqual(1,
+                         fp.identity(1))
+
+
+class TestPApply(TestCase):
+
+    def test(self):
+        def f(x,y):
+            return x,y
+
+        self.assertEqual(
+            (1,2),
+            fp.argfunc(f)((1,2))
+        )
 ####
 ## Generators
 ####
@@ -522,16 +627,18 @@ class TestIGroupBy(TestCase):
         from fp import (
             imap,
             igroupby,
-            binfunc,
+            argfunc,
             odd)
 
         items = [1, 3, 5, 2, 4, 6]  # items must be sorted
         grouped = igroupby(odd, items)
 
         resolved = list(imap(
-            binfunc(
-                lambda k, g: (k, list(g))),
-            grouped))
+            argfunc(
+                lambda k, g: (k, list(g))
+            ),
+            grouped)
+        )
 
         self.assertEqual([
             (True, [1, 3, 5]),
@@ -541,12 +648,12 @@ class TestIGroupBy(TestCase):
 
 class TestKWUnary(TestCase):
     def test_simple(self):
-        from fp import kwunary
+        from fp import kwfunc
 
         def func(a=None, b=None):
             return a + b
 
-        mapper = kwunary(func)
+        mapper = kwfunc(func)
 
         self.assertEqual(
             5,
@@ -554,12 +661,12 @@ class TestKWUnary(TestCase):
         )
 
     def test_restricted(self):
-        from fp import kwunary
+        from fp import kwfunc
 
         def func(a=None, b=None):
             return a + b
 
-        mapper = kwunary(func, "a", "b")
+        mapper = kwfunc(func, "a", "b")
 
         # a naive call using func(**kwargs)
         # would raise an error but put a bound
