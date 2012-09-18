@@ -29,20 +29,20 @@ from operator import (
 import operator
 
 
-def case(*args):
+def case(*rules):
     # If the args has a length of one, args[0] is an iterator
-    if len(args) == 1:
-        args = args[0]
+    if len(rules) == 1:
+        rules = rules[0]
     # if args is not a length of one, its len has to be even
     else:
-        assert even(len(args)), "uneven case expression"
+        assert even(len(rules)), "uneven case expression"
 
-    def inner(value):
-        for pred, f in ichunk(2, args):
+    def inner(*args, **kwargs):
+        for pred, f in ichunk(2, rules):
             if pred is True:
-                return f(value)
-            elif pred(value):
-                return f(value)
+                return f(*args, **kwargs)
+            elif pred(*args, **kwargs):
+                return f(*args, **kwargs)
         return None
     return inner
 
