@@ -1,36 +1,38 @@
 import re
-from fp import ap, p, t, imap, ifirst, ifilter, argfunc
-
+from fp import (
+    ap, p, t, imap, ifirst, ifilter, case, eq, const
+)
 
 def select_view(rules, url):
-    is_match = lambda pat, _: pat.match(url)
-    matched_views = ifilter(
-        argfunc(is_match),
-        rules
+    matches = ifilter(
+        lambda (i, match): match is not None,
+        imap(
+            lambda (i, (pat, _)): (i, pat.match(url)),
+            enumerate(rules)
+        )
     )
+
     try:
-        pat, view = ifirst(matched_views)
-        return url, pat, view
+        i, match = ifirst(matches)
+        pat, view = rules[i]
+        return url, match, view
     except StopIteration:
-        return None, None, None
+        return None
 
 
-def apply_view(url, pat, view):
+def apply_view((url, match, view)):
     if url is None:
         return None
     else:
-        match = pat.match(url)
         args = match.groups()
         return view(*args)
 
 
 def compiled_rules(patterns_to_functions):
-    compile_route = lambda pat, view: (re.compile(pat), view)
-
-    return map(
-        argfunc(compile_route),
-        patterns_to_functions
-    )
+    return [
+        (re.compile(pat), view)
+        for pat, view in patterns_to_functions
+    ]
 
 
 def url_router(*patterns_to_functions):
@@ -40,7 +42,12 @@ def url_router(*patterns_to_functions):
     # return the callable
     return t([
         p(select_view, rules),
-        argfunc(apply_view)
+        case(
+            # If select_view returns None, return None
+            (p(eq, None), const(None)),
+            # otherwise call apply_view
+            (True, apply_view)
+        )
     ])
 
 
