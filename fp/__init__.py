@@ -66,9 +66,13 @@ def case(*rules):
 from functools import partial as p
 
 
-def pp(f, *args0, **kwargs0):
-    """Creates a partial where arguments are prepended to the partial
-args"""
+def ap(f, *args0, **kwargs0):
+    """Appended partial, args is called with ap() are append to the
+arguments passed to the partial
+
+    strip_leading_slash = ap(str.lstrip, "/")
+    assert strip_leading_slash("/foo") == str.lstrip("/foo", "/")
+"""
 
     def inner(*args1, **kwargs1):
         args = args1 + args0
@@ -115,22 +119,33 @@ def identity(x):
     return x
 
 
-def binfunc(f):
-    """turns a binary function into an unary function which takes a pair
-
+def argfunc(f):
+    """Creates a function which takes an args tuple.
     >>> points = [(1,2), (110, 320)]
-    >>> getx = binfunc(lambda x,y: x)
-    >>> gety = binfunc(lambda x,y: y)
+    >>> getx = argfunc(lambda x,y: x)
+    >>> gety = argfunc(lambda x,y: y)
 
     >>> list(imap(getx, points))
+
     [1, 110]
 
     >>> list(imap(gety, points))
     [2, 320]
     """
-    def inner(pair):
-        x,y = pair
-        return f(x,y)
+    def inner(args):
+        return f(*args)
+    return inner
+
+
+def kwfunc(func, *keys):
+    if keys:
+        def inner(dct):
+            kwargs = {k:dct[k] for k in keys}
+            return func(**kwargs)
+    else:
+        def inner(dct):
+            return func(**dct)
+
     return inner
 
 
@@ -165,19 +180,13 @@ default if any of the keys are missing
     return t(get_functions)
 
 
-def kwunary(func, *keys):
-    if keys:
-        def inner(dct):
-            kwargs = {k:dct[k] for k in keys}
-            return func(**kwargs)
-    else:
-        def inner(dct):
-            return func(**dct)
-    return inner
 
 ###
 ## generators
 ###
+
+# TODO: test generators
+
 from itertools import (
     izip,
     izip_longest,
