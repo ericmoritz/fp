@@ -1,3 +1,4 @@
+
 """
 functools2
 
@@ -99,7 +100,7 @@ def t(fs):
     10
 
     """
-    head = ifirst(fs)
+    head = first(fs)
     tail = irest(fs)
 
     return reduce(
@@ -117,8 +118,6 @@ def flip(f):
 
 def identity(x):
     return x
-
-
 
 
 def kwfunc(func, *keys):
@@ -176,14 +175,93 @@ from itertools import (
     izip_longest,
     imap,
     ifilter,
-    islice,
     cycle as icycle,
     repeat as irepeat,
     dropwhile as idropwhile,
     takewhile as itakewhile,
     compress as icompress,
 )
+
+
 import itertools
+
+
+def islice(*args):
+    arg_len = len(args)
+    start, stop, step = None, None, None
+
+    if arg_len == 2:
+        start, iterable = args
+    elif arg_len == 3:
+        start, stop, iterable = args
+    elif arg_len == 4:
+        start, stop, step, iterable = args
+    else:
+        raise TypeError(
+            ("islice() takes at between 2 and 4 arguments"
+             " %s given") % (arg_len)
+        )
+    return itertools.islice(iterable, start, stop, step)
+
+
+def itake(n, iterable):
+    return islice(0, n, iterable)
+
+
+def idrop(n, iterable):
+    return itertools.islice(iterable, n, None)
+
+
+def first(iterable):
+    return iter(iterable).next()
+
+
+def irest(iterable):
+    return idrop(1, iterable)
+
+
+def isplitat(i, iterable):
+    iterator = iter(iterable)
+    yield itake(i, iterator)
+    yield iterator
+
+
+def izipwith(f, iterable1, iterable2):
+    return imap(f, iterable1, iterable2)
+
+
+def ichain(iterables):
+    return itertools.chain.from_iterable(iterables)
+
+
+def igroupby(keyfunc, iterable):
+    return itertools.groupby(iterable, keyfunc)
+
+
+def ichunk(size, iterable, fillvalue=undefined):
+    if fillvalue is undefined:
+        def chunker():
+            it = iter(iterable)
+
+            while True:
+                chunk = tuple(itake(size, it))
+                if chunk:
+                    yield chunk
+                else:
+                    break
+        return chunker()
+    else:
+        args = [iter(iterable)] * size
+        return izip_longest(fillvalue=fillvalue, *args)
+
+
+####
+## Reducers
+####
+
+
+def rsorted(keyfunc, iterable, **kwargs):
+    return sorted(iterable, key=keyfunc, **kwargs)
 
 
 def iand(iterable):
@@ -212,56 +290,6 @@ def iany(f, iterable):
 
 def iadd(iterable):
     return reduce(add, iterable)
-
-
-def itake(n, iterable):
-    return islice(iterable, n)
-
-
-def ifirst(iterable):
-    return iter(iterable).next()
-
-
-def irest(iterable):
-    return idrop(1, iterable)
-
-
-def idrop(n, iterable):
-    return itertools.islice(iterable, n, None)
-
-
-def isplit_at(i, iterable):
-    yield itake(i, iterable)
-    yield iterable
-
-
-def izip_with(f, iterable1, iterable2):
-    return imap(f, iterable1, iterable2)
-
-
-def ichain(iterables):
-    return itertools.chain.from_iterable(iterables)
-
-
-def igroupby(keyfunc, iterable):
-    return itertools.groupby(iterable, keyfunc)
-
-
-def ichunk(size, iterable, fillvalue=undefined):
-    args = [iter(iterable)] * size
-    if fillvalue is undefined:
-        return izip(*args)
-    else:
-        return izip_longest(fillvalue=fillvalue, *args)
-
-
-####
-## Reducers
-####
-
-
-def rsorted(keyfunc, iterable, **kwargs):
-    return sorted(iterable, key=keyfunc, **kwargs)
 
 
 ####

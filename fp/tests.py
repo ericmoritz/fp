@@ -1,5 +1,10 @@
-from unittest import TestCase
+from unittest import TestCase as BaseTestCase
+from collections import Iterator
 import fp
+
+class TestCase(BaseTestCase):
+    def assert_iterator(self, obj):
+        self.assertIsInstance(obj, Iterator)
 
 
 ##
@@ -325,8 +330,8 @@ class TestFlip(TestCase):
         def f(x, y):
             return x, y
 
-        self.assertEqual((2,1),
-                         fp.flip(f)(1,2))
+        self.assertEqual((2, 1),
+                         fp.flip(f)(1, 2))
 
 
 class TestIdentity(TestCase):
@@ -337,19 +342,343 @@ class TestIdentity(TestCase):
 
 
 ####
-## Generators
+## Generator functions
 ####
-class TestIChunk(TestCase):
+class TestIZip(TestCase):
+
+    def test(self):
+        result = fp.izip(
+            ["a", "b", "c"],
+            [1, 2]
+        )
+        self.assert_iterator(result)
+
+        self.assertEqual(
+            [("a", 1), ("b", 2), ],
+            list(result)
+        )
+
+
+class TestIZipLongest(TestCase):
+    def test(self):
+
+        result = fp.izip_longest(
+            ["a", "b", "c"],
+            [1, 2]
+        )
+
+        self.assert_iterator(result)
+
+        self.assertEqual(
+            [
+                ("a", 1),
+                ("b", 2),
+                ("c", None)
+            ],
+            list(result)
+        )
+
     def test_fillvalue(self):
+
+        result = fp.izip_longest(
+            ["a", "b", "c"],
+            [1, 2],
+            fillvalue=0
+        )
+
+        self.assert_iterator(result)
+
+        self.assertEqual(
+            [
+                ("a", 1),
+                ("b", 2),
+                ("c", 0)
+            ],
+            list(result)
+        )
+
+
+class TestIMap(TestCase):
+    def test(self):
+        result = fp.imap(
+            fp.p(fp.add, 1),
+            xrange(3)
+        )
+
+        self.assert_iterator(result)
+        self.assertEqual(
+            [1, 2, 3],
+            list(result)
+        )
+
+
+class TestIFilter(TestCase):
+
+    def test(self):
+        result = fp.ifilter(
+            fp.even,
+            xrange(3)
+        )
+        self.assert_iterator(result)
+        self.assertEqual(
+            [0,2],
+            list(result)
+        )
+
+
+class TestICycle(TestCase):
+
+    def test(self):
+        result = fp.icycle(
+            "ABC"
+        )
+
+        self.assert_iterator(result)
+
+        self.assertEquals(
+            ["A", "B", "C", "A","B", "C", "A"],
+            list(fp.itake(7, result))
+        )
+
+
+class TestIRepeat(TestCase):
+
+    def test(self):
+        result = fp.irepeat(
+            "Hi"
+        )
+
+        self.assert_iterator(result)
+
+        self.assertEquals(
+            ["Hi", "Hi", "Hi"],
+            list(
+                fp.itake(
+                    3,
+                    result
+                )
+            )
+        )
+
+
+class TestDropWhile(TestCase):
+
+    def test(self):
+        predicate = fp.ap(fp.lt, 5)
+        result = fp.idropwhile(
+            predicate,
+            [1, 4, 5, 1, 3]
+        )
+        self.assert_iterator(result)
+
+        self.assertEqual(
+            [5, 1, 3],
+            list(result)
+        )
+
+
+class TestTakeWhile(TestCase):
+
+    def test(self):
+        predicate = fp.ap(fp.lt, 4)
+        result = fp.itakewhile(
+            predicate,
+            [1, 3, 4, 2, 1]
+        )
+        self.assert_iterator(result)
+        self.assertEqual(
+            [1, 3],
+            list(result)
+        )
+
+
+class TestICompress(TestCase):
+    def test(self):
+        result = fp.icompress(
+            "ABCDEF",
+            [1, 0, 1, 0, 1, 1]
+        )
+        self.assert_iterator(result)
+        self.assertEqual(["A", "C", "E", "F"],
+                         list(result))
+
+
+class TestISlice(TestCase):
+
+    def test_start(self):
+        result = fp.islice(
+            1, xrange(5)
+        )
+
+        self.assert_iterator(result)
+        self.assertEqual(
+            [1, 2, 3, 4],
+            list(result)
+        )
+
+    def test_start_stop(self):
+        result = fp.islice(
+            1, 3, xrange(5)
+        )
+
+        self.assert_iterator(result)
+        self.assertEqual(
+            [1, 2],
+            list(result)
+        )
+
+    def test_start_stop_step(self):
+        result = fp.islice(
+            1, None, 2,
+            xrange(10)
+        )
+
+        self.assert_iterator(result)
+
+
+class TestITake(TestCase):
+
+    def test(self):
+        result = fp.itake(3, xrange(0, 10))
+
+        self.assert_iterator(result)
+
+        self.assertEqual(
+            [0, 1, 2],
+            list(result)
+        )
+
+
+class TestIDrop(TestCase):
+
+    def test(self):
+        self.assertEqual(
+            [3, 4, 5],
+            list(fp.idrop(3, range(6))))
+
+
+class TestFirst(TestCase):
+    def test(self):
+        self.assertEqual(1,
+                         fp.first(xrange(1, 10)))
+
+    def test_empty(self):
+        self.assertRaises(StopIteration, fp.first, [])
+
+
+class TestIRest(TestCase):
+    def test(self):
+        rest = fp.irest(xrange(1, 10))
+
+        self.assert_iterator(rest)
+
+        self.assertEqual([2, 3, 4, 5, 6, 7, 8, 9],
+                         list(rest))
+
+
+class TestISplitAt(TestCase):
+    def test(self):
+        result = fp.isplitat(
+            2,
+            [0,1,2,3,4]
+        )
+
+        self.assert_iterator(result)
+
+        consumed = [list(sub) for sub in result]
+
+        self.assertEqual(
+            [[0,1], [2,3,4]],
+            consumed
+        )
+
+
+class TestZipWith(TestCase):
+
+    def test(self):
+        result = fp.izipwith(
+            fp.add,
+            [1, 2, 3],
+            [2, 3, 4]
+        )
+
+        self.assert_iterator(result)
+        self.assertEqual(
+            [3, 5, 7],
+            list(result)
+        )
+
+
+class TestIChain(TestCase):
+    def test(self):
+        result = fp.ichain([
+            [1, 2],
+            [3, 4]
+        ])
+
+        self.assert_iterator(result)
+
+        self.assertEqual(
+            [1, 2, 3, 4],
+            list(result)
+        )
+
+
+class TestIGroupBy(TestCase):
+    def test(self):
+        from fp import (
+            imap,
+            igroupby,
+            odd)
+
+        items = [1, 3, 5, 2, 4, 6]  # items must be sorted
+        grouped = igroupby(odd, items)
+
+        resolved = [(k, list(iterable))
+                    for k, iterable in grouped]
+
+        self.assertEqual([
+            (True, [1, 3, 5]),
+            (False, [2, 4, 6]),
+        ], resolved)
+
+
+class TestIChunk(TestCase):
+
+    def test(self):
+        result = fp.ichunk(
+            3,
+            xrange(1, 10)
+        )
+
+        self.assert_iterator(result)
+
         self.assertEqual(
             [
                 (1, 2, 3),
                 (4, 5, 6),
                 (7, 8, 9),
-                (10, )
             ],
-            list(fp.ichunk(3, xrange(1, 11)))
+            list(result)
         )
+
+    def test_uneven(self):
+       result = fp.ichunk(
+           3,
+           xrange(1, 11)
+       )
+
+       self.assert_iterator(result)
+
+       self.assertEqual(
+           [
+               (1, 2, 3),
+               (4, 5, 6),
+               (7, 8, 9),
+               (10, )
+           ],
+           list(result)
+       )
 
     def test_fillvalue(self):
         self.assertEqual(
@@ -361,6 +690,29 @@ class TestIChunk(TestCase):
             ],
             list(fp.ichunk(3, xrange(1, 11), fillvalue=0))
         )
+
+    def test_fillvalue_even(self):
+        self.assertEqual(
+            [
+                (1, 2, 3),
+                (4, 5, 6),
+                (7, 8, 9),
+             ],
+            list(fp.ichunk(3, xrange(1, 10), fillvalue=0))
+        )
+
+    def test_empty(self):
+        self.assertEqual(
+            [],
+            list(fp.ichunk(2, []))
+        )
+
+
+##
+# Reducers
+##
+
+# bookmark
 
 
 class TestIAND(TestCase):
@@ -445,90 +797,10 @@ class TestIAdd(TestCase):
                          iadd([[1, 2], [3, 4]]))
 
 
-class TestConst(TestCase):
-
-    def test(self):
-        one = fp.const(1)
-
-        self.assertEqual(1, one())
 
 
-class TestDrop(TestCase):
-
-    def test(self):
-        self.assertEqual(
-            [3, 4, 5],
-            list(fp.idrop(3, range(6))))
 
 
-class TestDropWhile(TestCase):
-
-    def test(self):
-        lt = fp.lt
-        p = fp.p
-        idrop_while = fp.idropwhile
-
-        self.assertEqual(
-            [5, 6, 7, 8, 9, 10],
-            list(idrop_while(
-                lambda x: x < 5,
-                xrange(0, 11))))
-
-
-class TestTake(TestCase):
-
-    def test(self):
-        itake = fp.itake
-
-        self.assertEqual(
-            [1, 2, 3],
-            list(
-                itake(3, xrange(1, 10))))
-
-
-class TestTakeWhile(TestCase):
-
-    def test(self):
-        itakewhile = fp.itakewhile
-
-        def crashing_gen():
-            yield 1
-            yield 2
-            yield 3
-            yield 4
-            raise Exception("crap")
-            yield 5
-
-        self.assertEqual(
-            [1, 2, 3],
-            list(itakewhile(
-                lambda x: x < 4,
-                crashing_gen())))
-
-
-class TestIZip(TestCase):
-
-    def test(self):
-        izip = fp.izip
-
-        self.assertEqual(
-            [(1, 'a'),
-             (2, 'b'),
-             (3, 'c')],
-            list(izip([1, 2, 3], 'abc')))
-
-
-class TestZipWith(TestCase):
-
-    def test(self):
-        izip_with = fp.izip_with
-        add = fp.add
-
-        self.assertEqual(
-            [7, 9, 11, 13, 15],
-            list(izip_with(add,
-                           xrange(1, 6),
-                           xrange(6, 11))))
 
 
 class TestGet(TestCase):
@@ -593,44 +865,6 @@ class TestGetter(TestCase):
                          get_city2({"addresses": [{}]}))
 
 
-class TestIChain(TestCase):
-    def test(self):
-        self.assertEqual([1, 2, 3, 4],
-                         list(
-                             fp.ichain(
-                                 [
-                                     xrange(1, 3),
-                                     xrange(3, 5)
-                                 ])))
-
-
-class TestICompress(TestCase):
-    def test(self):
-        self.assertEqual(["A", "C", "E", "F"],
-                         list(
-                             fp.icompress("ABCDEF",
-                                          [1, 0, 1, 0, 1, 1])))
-
-
-class TestIGroupBy(TestCase):
-    def test(self):
-        from fp import (
-            imap,
-            igroupby,
-            odd)
-
-        items = [1, 3, 5, 2, 4, 6]  # items must be sorted
-        grouped = igroupby(odd, items)
-
-        resolved = list(imap(
-            lambda (k, g): (k, list(g)),
-            grouped)
-        )
-
-        self.assertEqual([
-            (True, [1, 3, 5]),
-            (False, [2, 4, 6]),
-        ], resolved)
 
 
 class TestKWUnary(TestCase):
