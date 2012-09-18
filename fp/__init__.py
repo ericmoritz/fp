@@ -16,32 +16,16 @@ import sys
 from operator import (
     # arithmatic
     add, sub, mul, truediv as div, pow, mod, neg,
+    concat,
 
     # bitwise ops
     and_, xor, or_, invert, not_,
 
-    concat, contains,
-
-    # comparison
-    lt, le, eq, ne, gt, ge
+     # predicates
+    lt, le, eq, ne, gt, ge, contains,
 
 )
 import operator
-
-
-def case(*rules):
-    # If the args has a length of one, args[0] is an iterator
-    if len(rules) == 1:
-        rules = rules[0]
-
-    def inner(*args, **kwargs):
-        for pred, f in rules:
-            if pred is True:
-                return f(*args, **kwargs)
-            elif pred(*args, **kwargs):
-                return f(*args, **kwargs)
-        return None
-    return inner
 
 
 def quot(x, y):
@@ -58,6 +42,21 @@ Python "in" operator."""
 
 def not_in(item, container):
     return item not in container
+
+
+def case(*rules):
+    # If the args has a length of one, args[0] is an iterator
+    if len(rules) == 1:
+        rules = rules[0]
+
+    def inner(*args, **kwargs):
+        for pred, f in rules:
+            if pred is True:
+                return f(*args, **kwargs)
+            elif pred(*args, **kwargs):
+                return f(*args, **kwargs)
+                return None
+    return inner
 
 
 ###
