@@ -336,16 +336,6 @@ class TestIdentity(TestCase):
                          fp.identity(1))
 
 
-class TestPApply(TestCase):
-
-    def test(self):
-        def f(x,y):
-            return x,y
-
-        self.assertEqual(
-            (1,2),
-            fp.argfunc(f)((1,2))
-        )
 ####
 ## Generators
 ####
@@ -627,16 +617,13 @@ class TestIGroupBy(TestCase):
         from fp import (
             imap,
             igroupby,
-            argfunc,
             odd)
 
         items = [1, 3, 5, 2, 4, 6]  # items must be sorted
         grouped = igroupby(odd, items)
 
         resolved = list(imap(
-            argfunc(
-                lambda k, g: (k, list(g))
-            ),
+            lambda (k, g): (k, list(g)),
             grouped)
         )
 

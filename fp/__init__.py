@@ -119,22 +119,6 @@ def identity(x):
     return x
 
 
-def argfunc(f):
-    """Creates a function which takes an args tuple.
-    >>> points = [(1,2), (110, 320)]
-    >>> getx = argfunc(lambda x,y: x)
-    >>> gety = argfunc(lambda x,y: y)
-
-    >>> list(imap(getx, points))
-
-    [1, 110]
-
-    >>> list(imap(gety, points))
-    [2, 320]
-    """
-    def inner(args):
-        return f(*args)
-    return inner
 
 
 def kwfunc(func, *keys):
