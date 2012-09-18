@@ -22,7 +22,7 @@ from operator import (
     and_, xor, or_, invert, not_,
 
      # predicates
-    lt, le, eq, ne, gt, ge, contains,
+    lt, le, eq, ne, gt, ge,
 
 )
 import operator
