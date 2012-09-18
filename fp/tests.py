@@ -69,6 +69,9 @@ class TestConcat(TestCase):
         self.assertEqual([1, 2],
                          fp.concat([1], [2]))
 
+        self.assertEqual("abcdef",
+                         fp.concat("abc", "def"))
+
 
 class TestContains(TestCase):
 
