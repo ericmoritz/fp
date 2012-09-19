@@ -123,7 +123,7 @@ group_by_host = p(igroupby, getter("host"))
 group_by_app  = p(igroupby, getter("application"))
 
 
-def reduce_app_group((app, stats)):
+def merge_app_group((app, stats)):
     kv = lambda s: (s['key'], s['value'])
     kv_pairs = imap(kv, stats)
 
@@ -133,7 +133,7 @@ def reduce_app_group((app, stats)):
     )
 
 
-class TestReduceAppGroup(unittest.TestCase):
+class TestMergeAppGroup(unittest.TestCase):
     def test(self):
         self.assertEqual(
             {
@@ -141,7 +141,7 @@ class TestReduceAppGroup(unittest.TestCase):
                 "key1": "val1",
                 "key2": "val2",
             },
-            reduce_app_group(
+            merge_app_group(
                 (
                     "test",
                     [
@@ -153,17 +153,17 @@ class TestReduceAppGroup(unittest.TestCase):
         )
 
 
-def reduce_host_group((host, stats)):
+def host_group_mapper((host, stats)):
     return (
         host,
         list(imap(
-            reduce_app_group,
+            merge_app_group,
             group_by_app(stats)
         ))
     )
 
 
-class TestReduceHost(unittest.TestCase):
+class TestHostGroupMapper(unittest.TestCase):
     def test(self):
         self.assertEqual(
             (
@@ -173,7 +173,7 @@ class TestReduceHost(unittest.TestCase):
                     {"application": "app2", "key2": "val2"},
                 ]
             ),
-            reduce_host_group(
+            host_group_mapper(
                 (
                     "host",
                     [
@@ -189,7 +189,7 @@ def collect_stats_fp(stats):
     return mergedict(
         {},
         imap(
-            reduce_host_group,
+            host_group_mapper,
             group_by_host(stats)
         )
     )
