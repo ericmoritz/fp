@@ -12,7 +12,7 @@ programming inspired tools to Python.
  * Provide a common interface to existing tools that makes using
    partials with higher-order functions more natural
 
-## Partial, Compose, and Thread
+## Partial, Compose, and Thrush
 
 ### Partial
 
@@ -31,7 +31,10 @@ Partials enable you to construct functions with constant arguments.
 
 Partial allows you to construct predicates which are self documenting
 
-    from fp import ifilter, p, eq
+    from fp import p
+    from itertools import ifilter
+    from operator import eq
+
     is_eric = p(eq, "Eric Moritz")
     only_eric = ifilter(is_eric, ["Eric Moritz", "John Doe"])
     assert list(only_eric) == ["Eric Moritz"]
@@ -42,7 +45,8 @@ predicate passes; list() is needed to resolve the generator to a list.
 Partial allows you to map a functions which normally takes more than
 one argument:
 
-    from fp import imap, p
+    from fp import p
+    from itertools import imap
     from datetime import date
     import calendar
     
@@ -54,7 +58,19 @@ one argument:
               xrange(1, days_in_month+1)
          )
 
+A complement to `p` is  `ap` which is an appended
+partial.  Constant arguments in an appended partial are appended to
+the argument list when calling the partial:
 
+    ap(date, 1)(2010, 10) == date(2010, 10, 1)
+    
+This enables you to fetch a list of values from a dictionary for
+instance:
+
+    get_name = ap(dict.get, "name")
+    ["eric", "mark"] == map(get_name, [{"name": "eric"}, {"name": "mark"}])
+    
+    
 ### Compose 
 
 Another function that is found in functional programming is a compose
@@ -63,7 +79,8 @@ composition of multiple unary functions.
 
 Here's how you would express `(x + 3) * 2`:
 
-     from fp import mul, add, p, c
+     from fp import p, c
+     from operator import mul, add
      
      add_three_and_double = c(p(mul, 2), p(add, 3))
      assert add_three_and_double(2) == 10
@@ -94,11 +111,10 @@ compositions:
 However doing workflows with compose is not as natural is it could
 be. This is where the functional thread comes into play.
 
-### Functional threads
+### Thrush
 
-Not to be confused with Thread(), a functional thread composes a
-single function from sequence of functions.  It does a similar job as
-`c` but is left associative.
+A Thrush composes a single function from sequence of functions.  It
+does a similar job as `c` but is left associative.
 
 
     dosomething = t([do1, do2, do3])
@@ -106,12 +122,6 @@ single function from sequence of functions.  It does a similar job as
     # both expressions have the same result
     assert do3(do2(do1(value))) == dosomething()
 
-
-## Operators
-
-Every operator in Python will be mirrored in `fp`.  In most
-cases these operators are simply mirrors of the function in the
-`operator` module.
 
 ## Lazily loading generators
 

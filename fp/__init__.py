@@ -12,6 +12,7 @@ undefined = object()
 ####
 import sys
 import operator
+import itertools
 
 
 def case(*rules):
@@ -175,10 +176,6 @@ default if any of the keys are missing
 ## generators
 ###
 
-# TODO: test generators
-
-import itertools
-
 
 def islice(*args):
     arg_len = len(args)
@@ -222,10 +219,6 @@ def isplitat(i, iterable):
 
 def izipwith(f, iterable1, iterable2):
     return itertools.imap(f, iterable1, iterable2)
-
-
-def ichain(iterables):
-    return itertools.chain.from_iterable(iterables)
 
 
 def ichunk(size, iterable, fillvalue=undefined):

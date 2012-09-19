@@ -327,21 +327,6 @@ class TestZipWith(TestCase):
         )
 
 
-class TestIChain(TestCase):
-    def test(self):
-        result = fp.ichain([
-            [1, 2],
-            [3, 4]
-        ])
-
-        self.assert_iterator(result)
-
-        self.assertEqual(
-            [1, 2, 3, 4],
-            list(result)
-        )
-
-
 class TestIChunk(TestCase):
 
     def test(self):
