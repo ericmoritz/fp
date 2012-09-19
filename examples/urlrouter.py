@@ -1,7 +1,13 @@
 import re
 from fp import (
-    ap, p, t, imap, ifirst, ifilter, case, eq, const
+    ap, p, t, first, case, const
 )
+
+from itertools import (
+    imap, ifilter
+)
+from operator import eq
+
 
 def select_view(rules, url):
     matches = ifilter(
@@ -13,7 +19,7 @@ def select_view(rules, url):
     )
 
     try:
-        i, match = ifirst(matches)
+        i, match = first(matches)
         pat, view = rules[i]
         return url, match, view
     except StopIteration:
