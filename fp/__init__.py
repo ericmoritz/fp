@@ -11,35 +11,7 @@ undefined = object()
 ## Operators
 ####
 import sys
-from operator import (
-    # arithmatic
-    add, sub, mul, truediv as div, pow, mod, neg,
-    concat,
-
-    # bitwise ops
-    and_, xor, or_, invert, not_,
-
-    # predicates
-    lt, le, eq, ne, gt, ge,
-
-)
 import operator
-
-
-def quot(x, y):
-    """returns the quotient after dividing the its first integral
-    argument by its second integral argument"""
-    return operator.floordiv(x, y)
-
-
-def in_(item, container):
-    """This mimics the signature of Haskell's `elem` function and the
-Python "in" operator."""
-    return item in container
-
-
-def not_in(item, container):
-    return item not in container
 
 
 def case(*rules):
@@ -53,13 +25,8 @@ def case(*rules):
                 return f(*args, **kwargs)
             elif pred(*args, **kwargs):
                 return f(*args, **kwargs)
-                return None
+        raise RuntimeError("unmatched case")
     return inner
-
-
-def setitem(obj, *args, **kwargs):
-    operator.setitem(obj, *args, **kwargs)
-    return obj
 
 
 def getitem(obj, *args, **kwargs):
@@ -69,6 +36,24 @@ def getitem(obj, *args, **kwargs):
         return operator.getitem(obj, *args, **kwargs)
     except (KeyError, IndexError):
         return default
+
+
+def setitem(obj, *args, **kwargs):
+    inner = callreturn(operator.setitem)
+    return inner(obj, *args, **kwargs)
+
+
+def delitem(obj, *args, **kwargs):
+    try:
+        operator.delitem(obj, *args, **kwargs)
+    except KeyError:
+        pass
+    return obj
+
+
+def dictupdate(dct, kv_iterable):
+    inner = callreturn(dict.update)
+    return inner(dct, kv_iterable)
 
 
 ###
@@ -131,6 +116,24 @@ def identity(x):
     return x
 
 
+def callreturn(func):
+    """create a function which takes an object with args and kwargs,
+applys func(object, *args, **kwargs) and return object
+
+Useful for non-pure functions which return None instead of the object.
+
+These functions makes compositions difficult.
+
+    dictupdate = callreturn(dict.update)
+    assert {"foo": "bar"} = dictupdate({}, [("foo", "bar")])
+    """
+
+    def inner(obj, *args, **kwargs):
+        func(obj, *args, **kwargs)
+        return obj
+    return inner
+
+
 def kwfunc(func, *keys):
     if keys:
         def inner(dct):
@@ -173,19 +176,6 @@ default if any of the keys are missing
 ###
 
 # TODO: test generators
-
-from itertools import (
-    izip,
-    izip_longest,
-    imap,
-    ifilter,
-    cycle as icycle,
-    repeat as irepeat,
-    dropwhile as idropwhile,
-    takewhile as itakewhile,
-    compress as icompress,
-)
-
 
 import itertools
 
@@ -231,15 +221,11 @@ def isplitat(i, iterable):
 
 
 def izipwith(f, iterable1, iterable2):
-    return imap(f, iterable1, iterable2)
+    return itertools.imap(f, iterable1, iterable2)
 
 
 def ichain(iterables):
     return itertools.chain.from_iterable(iterables)
-
-
-def igroupby(keyfunc, iterable):
-    return itertools.groupby(iterable, keyfunc)
 
 
 def ichunk(size, iterable, fillvalue=undefined):
@@ -256,7 +242,7 @@ def ichunk(size, iterable, fillvalue=undefined):
         return chunker()
     else:
         args = [iter(iterable)] * size
-        return izip_longest(fillvalue=fillvalue, *args)
+        return itertools.izip_longest(fillvalue=fillvalue, *args)
 
 
 ####
@@ -264,55 +250,32 @@ def ichunk(size, iterable, fillvalue=undefined):
 ####
 
 
-def iand(iterable):
-    """takes the logical conjunction of a iterable of boolean values"""
-    # The built-in all function does the same thing as iand
-    return all(iterable)
-
-
-def iall(f, iterable):
+def allmap(f, iterable):
     """returns True if all elements of the list satisfy the predicate,
     and False otherwise."""
-    return iand(imap(f, iterable))
+    return all(itertools.imap(f, iterable))
 
 
-def ior(iterable):
-    """takes the logical disjunction of a iterable of boolean values"""
-    # The built-in any function does the same thing as ior
-    return any(iterable)
-
-
-def iany(f, iterable):
+def anymap(f, iterable):
     """returns True if any of the elements of the list satisfy the
     predicate, and False otherwise"""
-    return ior(imap(f, iterable))
-
-
-def iadd(iterable):
-    return reduce(add, iterable)
-
-
-def mergedict(dct, kv_pairs):
-    for k, v in kv_pairs:
-        dct[k] = v
-    return dct
+    return any(itertools.imap(f, iterable))
 
 
 ####
 ## Predicates
 ####
-from operator import (
-    is_,
-)
-
 def even(x):
-    return mod(x, 2) == 0
+    return operator.mod(x, 2) == 0
 
 
-odd = c(not_, even)
+def odd(x):
+    return operator.mod(x, 2) != 0
 
 
 def is_none(x):
     return x is None
 
-not_none = c(not_, is_none)
+
+def not_none(x):
+    return x is not None

@@ -1,4 +1,3 @@
-import fp
 import unittest
 
 
@@ -109,25 +108,28 @@ class TestCollectStats(unittest.TestCase):
         )
 
 
+from itertools import (
+    imap,
+    groupby
+)
+
 from fp import (
     p,
+    ap,
     getter,
-    igroupby,
-    imap,
-    ichain,
-    mergedict,
+    dictupdate,
 )
 
 
-group_by_host = p(igroupby, getter("host"))
-group_by_app  = p(igroupby, getter("application"))
+group_by_host = ap(groupby, getter("host"))
+group_by_app  = ap(groupby, getter("application"))
 
 
 def merge_app_group((app, stats)):
     kv = lambda s: (s['key'], s['value'])
     kv_pairs = imap(kv, stats)
 
-    return mergedict(
+    return dictupdate(
         {"application": app},
         kv_pairs
     )
@@ -186,7 +188,7 @@ class TestHostGroupMapper(unittest.TestCase):
 
 
 def collect_stats_fp(stats):
-    return mergedict(
+    return dictupdate(
         {},
         imap(
             host_group_mapper,

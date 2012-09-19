@@ -1,6 +1,8 @@
 from unittest import TestCase as BaseTestCase
 from collections import Iterator
 import fp
+import operator as op
+
 
 class TestCase(BaseTestCase):
     def assert_iterator(self, obj):
@@ -10,190 +12,11 @@ class TestCase(BaseTestCase):
 ##
 # Operator tests
 ##
-
-class TestAdd(TestCase):
-
-    def test(self):
-        self.assertEqual(4,
-                         fp.add(2, 2))
-
-
-class TestSub(TestCase):
-
-    def test(self):
-        self.assertEqual(2, fp.sub(4, 2))
-
-
-class TestMul(TestCase):
-
-    def test(self):
-        self.assertEqual(10, fp.mul(5, 2))
-
-
-class TestDiv(TestCase):
-
-    def test(self):
-        self.assertEquals(1.5,
-                          fp.div(3, 2))
-
-
-class TestQuot(TestCase):
-
-    def test(self):
-        self.assertEquals(1,
-                          fp.quot(3, 2))
-
-
-class TestPow(TestCase):
-
-    def test(self):
-        self.assertEquals(256,
-                          fp.pow(2, 8))
-
-
-class TestMod(TestCase):
-
-    def test(self):
-        self.assertEquals(3,
-                          fp.mod(18, 5))
-
-
-class TestNeg(TestCase):
-
-    def test(self):
-        self.assertEquals(-1,
-                          fp.neg(1))
-
-        self.assertEquals(1,
-                          fp.neg(-1))
-
-
-class TestConcat(TestCase):
-
-    def test(self):
-        self.assertEqual([1, 2],
-                         fp.concat([1], [2]))
-
-        self.assertEqual("abcdef",
-                         fp.concat("abc", "def"))
-
-
-class TestAnd(TestCase):
-
-    def test(self):
-        self.assertEquals(1,
-                          fp.and_(3, 1))
-
-        self.assertIs(True,
-                      fp.and_(True, True))
-
-        self.assertIs(False,
-                      fp.and_(True, False))
-
-
-class TestXor(TestCase):
-
-    def test(self):
-        self.assertEquals(4,
-                          fp.xor(12, 8))
-
-        self.assertIs(True,
-                      fp.xor(True, False))
-
-        self.assertIs(False,
-                      fp.xor(True, True))
-
-        self.assertIs(False,
-                      fp.xor(False, False))
-
-
-class TestOr(TestCase):
-
-    def test(self):
-        self.assertEqual(15,
-                         fp.or_(8, 7))
-
-        self.assertEqual(True,
-                         fp.or_(True, False))
-
-        self.assertEqual(True,
-                         fp.or_(True, True))
-
-        self.assertEqual(False,
-                         fp.or_(False, False))
-
-
-class TestInvert(TestCase):
-
-    def test(self):
-        self.assertEqual(-1,
-                         fp.invert(0))
-
-
-class TestNot(TestCase):
-
-    def test(self):
-        self.assertEqual(False, fp.not_(True))
-        self.assertEqual(True, fp.not_(False))
-
-
-class TestLT(TestCase):
-
-    def test(self):
-        self.assertEqual(True, fp.lt(5, 10))
-        self.assertEqual(False, fp.lt(10, 5))
-        self.assertEqual(False, fp.lt(5, 5))
-
-
-class TestLE(TestCase):
-
-    def test(self):
-        self.assertEqual(True, fp.le(5, 10))
-        self.assertEqual(False, fp.le(10, 5))
-        self.assertEqual(True, fp.le(5, 5))
-
-
-class TestEq(TestCase):
-
-    def test(self):
-        self.assertEqual(True, fp.eq(5, 5))
-        self.assertEqual(False, fp.eq(10, 5))
-
-
-class TestGT(TestCase):
-
-    def test(self):
-        self.assertEqual(True, fp.gt(10, 5))
-        self.assertEqual(False, fp.gt(5, 10))
-        self.assertEqual(False, fp.gt(5, 5))
-
-
-class TestGE(TestCase):
-
-    def test(self):
-        self.assertEqual(True, fp.ge(10, 5))
-        self.assertEqual(False, fp.ge(5, 10))
-        self.assertEqual(True, fp.ge(5, 5))
-
-
-# mimics the signature of Python's in operator
-class TestIn_(TestCase):
-
-    def test(self):
-        self.assertEquals(True,
-                          fp.in_(1, [1, 2]))
-
-        self.assertEquals(True,
-                          fp.in_(2, {1, 2}))
-
-        self.assertEquals(True,
-                          fp.in_("one", {"one": 1}))
-
-
 class TestCaseOp(TestCase):
     def test(self):
         import re
-        from fp import p, ap, c, case, identity, concat
+        from fp import p, ap, c, case, identity
+        from operator import concat
 
         add_domain = p(concat, "https://example.com/")
         make_secure = p(re.sub, r"^http://", r"https://")
@@ -244,13 +67,15 @@ class TestCaseOp(TestCase):
             sanitize_url2("test.htm")
         )
 
-class TestSetItem(TestCase):
-    def test(self):
-        x = {}
-        self.assertEqual(
-            {"foo": 1},
-            fp.setitem(x, "foo", 1)
-        )
+    def test_unmatched(self):
+        from fp import ap, case, const
+        from operator import lt
+        op = case([
+            (ap(lt, 0), const(True))
+        ])
+
+        self.assertRaises(RuntimeError, op, 1)
+
 
 class TestGetItem(TestCase):
     def test(self):
@@ -272,6 +97,27 @@ class TestGetItem(TestCase):
         )
 
 
+class TestSetItem(TestCase):
+    def test(self):
+        x = {}
+        self.assertEqual(
+            {"foo": 1},
+            fp.setitem(x, "foo", 1)
+        )
+
+
+class TestDelItem(TestCase):
+    def test(self):
+        x = {"foo": 1}
+        self.assertEqual(
+            {},
+            fp.delitem(x, "foo")
+        )
+
+        self.assertEqual(
+            {},
+            fp.delitem({}, "foo")
+        )
 ##
 # Partials
 ##
@@ -280,30 +126,28 @@ class TestGetItem(TestCase):
 class TestPartial(TestCase):
 
     def test(self):
-        add_three = fp.p(fp.add, 3)
+        add_three = fp.p(op.add, 3)
 
         self.assertEqual(6, add_three(3))
 
 
 class TestPartialPrepend(TestCase):
     def test(self):
-        def example(a, b, op=fp.sub):
+        def example(a, b, op=op.sub):
             return op(a, b)
 
         sub_two = fp.ap(example, 2)
 
         self.assertEqual(4, sub_two(6))
         self.assertEqual(-2, sub_two(0))
-        self.assertEqual(20, sub_two(10, op=fp.mul))
+        self.assertEqual(20, sub_two(10, op=op.mul))
 
 
 class TestCompose(TestCase):
 
     def test(self):
-        c = fp.c
-        p = fp.p
-        mul = fp.mul
-        add = fp.add
+        from fp import c, p
+        from operator import mul, add
 
         add_three_and_double1 = c(
             lambda x: x * 2,
@@ -323,10 +167,8 @@ class TestCompose(TestCase):
 class TestThread(TestCase):
 
     def test(self):
-        t = fp.t
-        p = fp.p
-        mul = fp.mul
-        add = fp.add
+        from fp import t, p
+        from operator import mul, add
 
         add_three_and_double1 = t([
             lambda x: x + 3,
@@ -371,166 +213,13 @@ class TestIdentity(TestCase):
 ####
 ## Generator functions
 ####
-class TestIZip(TestCase):
-
-    def test(self):
-        result = fp.izip(
-            ["a", "b", "c"],
-            [1, 2]
-        )
-        self.assert_iterator(result)
-
-        self.assertEqual(
-            [("a", 1), ("b", 2), ],
-            list(result)
-        )
-
-
-class TestIZipLongest(TestCase):
-    def test(self):
-
-        result = fp.izip_longest(
-            ["a", "b", "c"],
-            [1, 2]
-        )
-
-        self.assert_iterator(result)
-
-        self.assertEqual(
-            [
-                ("a", 1),
-                ("b", 2),
-                ("c", None)
-            ],
-            list(result)
-        )
-
-    def test_fillvalue(self):
-
-        result = fp.izip_longest(
-            ["a", "b", "c"],
-            [1, 2],
-            fillvalue=0
-        )
-
-        self.assert_iterator(result)
-
-        self.assertEqual(
-            [
-                ("a", 1),
-                ("b", 2),
-                ("c", 0)
-            ],
-            list(result)
-        )
-
-
-class TestIMap(TestCase):
-    def test(self):
-        result = fp.imap(
-            fp.p(fp.add, 1),
-            xrange(3)
-        )
-
-        self.assert_iterator(result)
-        self.assertEqual(
-            [1, 2, 3],
-            list(result)
-        )
-
-
-class TestIFilter(TestCase):
-
-    def test(self):
-        result = fp.ifilter(
-            fp.even,
-            xrange(3)
-        )
-        self.assert_iterator(result)
-        self.assertEqual(
-            [0,2],
-            list(result)
-        )
-
-
-class TestICycle(TestCase):
-
-    def test(self):
-        result = fp.icycle(
-            "ABC"
-        )
-
-        self.assert_iterator(result)
-
-        self.assertEquals(
-            ["A", "B", "C", "A","B", "C", "A"],
-            list(fp.itake(7, result))
-        )
-
-
-class TestIRepeat(TestCase):
-
-    def test(self):
-        result = fp.irepeat(
-            "Hi"
-        )
-
-        self.assert_iterator(result)
-
-        self.assertEquals(
-            ["Hi", "Hi", "Hi"],
-            list(
-                fp.itake(
-                    3,
-                    result
-                )
-            )
-        )
-
-
-class TestDropWhile(TestCase):
-
-    def test(self):
-        predicate = fp.ap(fp.lt, 5)
-        result = fp.idropwhile(
-            predicate,
-            [1, 4, 5, 1, 3]
-        )
-        self.assert_iterator(result)
-
-        self.assertEqual(
-            [5, 1, 3],
-            list(result)
-        )
-
-
-class TestTakeWhile(TestCase):
-
-    def test(self):
-        predicate = fp.ap(fp.lt, 4)
-        result = fp.itakewhile(
-            predicate,
-            [1, 3, 4, 2, 1]
-        )
-        self.assert_iterator(result)
-        self.assertEqual(
-            [1, 3],
-            list(result)
-        )
-
-
-class TestICompress(TestCase):
-    def test(self):
-        result = fp.icompress(
-            "ABCDEF",
-            [1, 0, 1, 0, 1, 1]
-        )
-        self.assert_iterator(result)
-        self.assertEqual(["A", "C", "E", "F"],
-                         list(result))
 
 
 class TestISlice(TestCase):
+
+    def test_badarglen(self):
+        self.assertRaises(TypeError, fp.islice)
+        self.assertRaises(TypeError, fp.islice, 1, 2, 3, 4, 5)
 
     def test_start(self):
         result = fp.islice(
@@ -623,8 +312,10 @@ class TestISplitAt(TestCase):
 class TestZipWith(TestCase):
 
     def test(self):
+        from operator import add
+
         result = fp.izipwith(
-            fp.add,
+            add,
             [1, 2, 3],
             [2, 3, 4]
         )
@@ -649,25 +340,6 @@ class TestIChain(TestCase):
             [1, 2, 3, 4],
             list(result)
         )
-
-
-class TestIGroupBy(TestCase):
-    def test(self):
-        from fp import (
-            imap,
-            igroupby,
-            odd)
-
-        items = [1, 3, 5, 2, 4, 6]  # items must be sorted
-        grouped = igroupby(odd, items)
-
-        resolved = [(k, list(iterable))
-                    for k, iterable in grouped]
-
-        self.assertEqual([
-            (True, [1, 3, 5]),
-            (False, [2, 4, 6]),
-        ], resolved)
 
 
 class TestIChunk(TestCase):
@@ -739,10 +411,10 @@ class TestIChunk(TestCase):
 # Reducers
 ##
 
-class TestMergeDict(TestCase):
+class TestDictUpdate(TestCase):
     def test(self):
         start = {}
-        result = fp.mergedict(
+        result = fp.dictupdate(
             start,
             [
                 ("key1", "val1"),
@@ -761,86 +433,21 @@ class TestMergeDict(TestCase):
 # bookmark
 
 
-class TestIAND(TestCase):
-    def test(self):
-        def crashing_gen():
-            yield True
-            yield False
-            raise Exception("crap")
-            yield True
-
-        self.assertFalse(fp.iand(crashing_gen()))
-        self.assertTrue(fp.iand([True, True, True]))
-
-
-class TestIAll(TestCase):
+class TestAllMap(TestCase):
 
     def test(self):
-        iall = fp.iall
-        even = fp.even
-        odd = fp.odd
+        from fp import even, odd, allmap
 
-        self.assertTrue(iall(even, xrange(2, 10, 2)))
-        self.assertFalse(iall(odd, xrange(2, 10, 2)))
-
-        # ensure that iall is lazy
-        def crashing_gen():
-            yield 2
-            yield 3
-            raise Exception("crap")
-            yield 4
-
-        # if this returns false, that means we never get to the
-        # exception in the generator
-        self.assertFalse(iall(even, crashing_gen()))
+        self.assertTrue(allmap(even, xrange(2, 10, 2)))
+        self.assertFalse(allmap(odd, xrange(2, 10, 2)))
 
 
-class TestIOR(TestCase):
-
+class TestAnyMap(TestCase):
     def test(self):
-        self.assertTrue(fp.ior([True, False, True]))
-        self.assertFalse(fp.ior([False, False, False]))
+        from fp import even, odd, anymap
 
-        def crashing_gen():
-            yield False
-            yield True
-            raise Exception("crap")
-            yield False
-
-        self.assertTrue(fp.ior(crashing_gen()))
-
-
-class TestIAny(TestCase):
-
-    def test(self):
-        iany = fp.iany
-        even = fp.even
-        odd = fp.odd
-
-        self.assertTrue(iany(even, xrange(1, 10)))
-        self.assertFalse(iany(odd, xrange(2, 10, 2)))
-
-        # ensure that iall is lazy
-        def crashing_gen():
-            yield 2
-            raise Exception("crap")
-            yield 3
-            yield 4
-
-        # if this returns false, that means we never get to the
-        # exception in the generator
-        self.assertTrue(iany(even, crashing_gen()))
-
-
-class TestIAdd(TestCase):
-    def test(self):
-        iadd = fp.iadd
-
-        self.assertEqual("eric",
-                         iadd(["er", "ic"]))
-
-        self.assertEqual([1, 2, 3, 4],
-                         iadd([[1, 2], [3, 4]]))
+        self.assertTrue(anymap(even, [2,3,4]))
+        self.assertFalse(anymap(odd, [2,4,6]))
 
 
 class TestGetter(TestCase):
@@ -891,3 +498,29 @@ class TestKWUnary(TestCase):
             5,
             mapper({"a": 2, "b": 3, "c": 4})
         )
+
+####
+## predicates
+####
+class TestEven(TestCase):
+    def test(self):
+        self.assertTrue(fp.even(2))
+        self.assertFalse(fp.even(1))
+
+
+class TestOdd(TestCase):
+    def test(self):
+        self.assertFalse(fp.odd(2))
+        self.assertTrue(fp.odd(1))
+
+
+class TestIsNone(TestCase):
+    def test(self):
+        self.assertTrue(fp.is_none(None))
+        self.assertFalse(fp.is_none(False))
+
+
+class TestNotNone(TestCase):
+    def test(self):
+        self.assertFalse(fp.not_none(None))
+        self.assertTrue(fp.not_none(False))
