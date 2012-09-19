@@ -244,6 +244,33 @@ class TestCaseOp(TestCase):
             sanitize_url2("test.htm")
         )
 
+class TestSetItem(TestCase):
+    def test(self):
+        x = {}
+        self.assertEqual(
+            {"foo": 1},
+            fp.setitem(x, "foo", 1)
+        )
+
+class TestGetItem(TestCase):
+    def test(self):
+        x = {"foo": 1}
+
+        self.assertEqual(
+            1,
+            fp.getitem(x, "foo")
+        )
+
+        self.assertEqual(
+            None,
+            fp.getitem(x, "bar")
+        )
+
+        self.assertEqual(
+            0,
+            fp.getitem(x, "bar", default=0)
+        )
+
 
 ##
 # Partials
@@ -712,6 +739,25 @@ class TestIChunk(TestCase):
 # Reducers
 ##
 
+class TestMergeDict(TestCase):
+    def test(self):
+        start = {}
+        result = fp.mergedict(
+            start,
+            [
+                ("key1", "val1"),
+                ("key2", "val2"),
+            ]
+        )
+
+        self.assertEqual(
+            {"key1": "val1",
+             "key2": "val2"},
+            result)
+
+        # mergedict updates in place, start is the same dict as result
+        self.assertIs(start, result)
+
 # bookmark
 
 
@@ -797,72 +843,21 @@ class TestIAdd(TestCase):
                          iadd([[1, 2], [3, 4]]))
 
 
-
-
-
-
-
-
-class TestGet(TestCase):
-
-    def test_missing(self):
-        self.assertEqual(None,
-                         fp.get("test", None))
-
-        self.assertEqual(None,
-                         fp.get("test", {})),
-
-        self.assertEqual(None,
-                         fp.get("test", [])),
-
-        self.assertEqual(None,
-                         fp.get(0, [])),
-
-        self.assertEqual(None,
-                         fp.get("a", set())),
-
-    def test_exists(self):
-        self.assertEqual("val",
-                         fp.get("test", {"test": "val"})),
-
-        self.assertEqual("test",
-                         fp.get(0, ["test"])),
-
-        self.assertEqual("a",
-                         fp.get("a", set("a"))),
-
-
 class TestGetter(TestCase):
 
     def test(self):
-        get = fp.get
-        t = fp.t
-        p = fp.p
-        c = fp.c
+        from fp import getitem, t, c
 
-        get_city1 = t([
-            p(get, "addresses"),
-            p(get, 0),
-            p(get, "city")])
-
-        get_city2 = fp.getter("addresses", 0, "city")
+        get_city = fp.getter("addresses", 0, "city")
 
         self.assertEqual("Reston",
-                         get_city1({"addresses": [{"city": "Reston"}]}))
-
-        self.assertEqual("Reston",
-                         get_city2({"addresses": [{"city": "Reston"}]}))
-
-        get_address = fp.getter("name")
-
-        self.assertEqual("Eric",
-                         get_address({"name": "Eric"}))
+                         get_city({"addresses": [{"city": "Reston"}]}))
 
         self.assertEqual(None,
-                         get_city2({"addresses": []}))
+                         get_city({"addresses": []}))
 
         self.assertEqual(None,
-                         get_city2({"addresses": [{}]}))
+                         get_city({"addresses": [{}]}))
 
 
 

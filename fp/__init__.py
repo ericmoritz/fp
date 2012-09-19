@@ -1,7 +1,4 @@
-
 """
-functools2
-
 Provides a number of operator and higher-order functions for FP fun
 """
 
@@ -22,7 +19,7 @@ from operator import (
     # bitwise ops
     and_, xor, or_, invert, not_,
 
-     # predicates
+    # predicates
     lt, le, eq, ne, gt, ge,
 
 )
@@ -58,6 +55,20 @@ def case(*rules):
                 return f(*args, **kwargs)
                 return None
     return inner
+
+
+def setitem(obj, *args, **kwargs):
+    operator.setitem(obj, *args, **kwargs)
+    return obj
+
+
+def getitem(obj, *args, **kwargs):
+    default = kwargs.pop("default", None)
+
+    try:
+        return operator.getitem(obj, *args, **kwargs)
+    except (KeyError, IndexError):
+        return default
 
 
 ###
@@ -132,20 +143,7 @@ def kwfunc(func, *keys):
     return inner
 
 
-def get(key, obj):
-    if obj is None:
-        return None
-    # treat set membership differently
-    if hasattr(obj, "issubset") and key in obj:
-        return key
-    # handle lists and dicts
-    try:
-        return obj[key]
-    except (KeyError, IndexError, TypeError):
-        return None
-
-
-def getter(*args):
+def getter(*args, **kwargs):
     """Creates a function that digs into a nested data structure or returns
 default if any of the keys are missing
 
@@ -158,10 +156,16 @@ default if any of the keys are missing
     >>> list(get_cities(addresses))
     ["Reston", "Herndon", None]
     """
-    # thread a list of get(key, obj) calls
-    get_functions = [p(get, key) for key in args]
-    return t(get_functions)
+    default = kwargs.pop("default", None)
 
+    def inner(obj):
+        for arg in args:
+            obj = getitem(obj, arg, default=undefined)
+            if obj is undefined:
+                return default
+        return obj
+
+    return inner
 
 
 ###
@@ -260,10 +264,6 @@ def ichunk(size, iterable, fillvalue=undefined):
 ####
 
 
-def rsorted(keyfunc, iterable, **kwargs):
-    return sorted(iterable, key=keyfunc, **kwargs)
-
-
 def iand(iterable):
     """takes the logical conjunction of a iterable of boolean values"""
     # The built-in all function does the same thing as iand
@@ -292,10 +292,18 @@ def iadd(iterable):
     return reduce(add, iterable)
 
 
+def mergedict(dct, kv_pairs):
+    for k, v in kv_pairs:
+        dct[k] = v
+    return dct
+
+
 ####
 ## Predicates
 ####
-
+from operator import (
+    is_,
+)
 
 def even(x):
     return mod(x, 2) == 0
