@@ -4,7 +4,7 @@ programming inspired tools to Python.
 # Goals
 
  * Provide the functions to make compositions of functions using
-   `partial`, `compose` and `thread` seen often in FP.
+   `partial`, `compose` and `thrush` seen often in FP.
  * Provide a collection of useful predicates and operator functions to
    use with higher-order functions
  * Provide a collection of common higher-order functions usually
