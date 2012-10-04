@@ -1,33 +1,20 @@
 """
-Provides a number of operator and higher-order functions for FP fun
+A collection of functional programming inspired tools for Python.
 """
+import sys
+import operator
+import itertools
+
 
 ####
 # atoms
 ####
 undefined = object()
 
+
 ####
 ## Operators
 ####
-import sys
-import operator
-import itertools
-
-
-def case(*rules):
-    # If the args has a length of one, args[0] is an iterator
-    if len(rules) == 1:
-        rules = rules[0]
-
-    def inner(*args, **kwargs):
-        for pred, f in rules:
-            if pred is True:
-                return f(*args, **kwargs)
-            elif pred(*args, **kwargs):
-                return f(*args, **kwargs)
-        raise RuntimeError("unmatched case")
-    return inner
 
 
 def getitem(obj, *args, **kwargs):
@@ -58,44 +45,90 @@ def dictupdate(dct, kv_iterable):
 
 
 ###
-# Partials
+# Higher-Order functions
 ###
 
 from functools import partial as p
 
+def pp(func, *args0, **kwargs0):
+    """..function::pp(func : callable[, *args][, **keywords]) -> partial callable
 
-def ap(f, *args0, **kwargs0):
-    """Appended partial, args is called with ap() are append to the
-arguments passed to the partial
+Returns an prepended partial function which when called will behave
+like `func` called with the positional arguments `args` and `keywords`
 
-    strip_leading_slash = ap(str.lstrip, "/")
-    assert strip_leading_slash("/foo") == str.lstrip("/foo", "/")
-"""
+If more arguments are supplied to the call, they are prepended to
+args. If additional keyword arguments are supplied, they extend and
+override keywords.
+
+This is useful for converting mapping functions whose first argument
+is the subject of mapper.
+
+    >>> from fp import pp
+    >>> map(pp(str.lstrip, '/'), ['/foo', '/bar'])
+    ['foo', 'bar']
+
+This is the equivalence to these expressions
+
+    >>> [item.lstrip("/") for item in ['/foo', '/bar']]
+    ['foo', 'bar']
+
+    >>> map(lambda x: x.lstrip('/'), ['/foo', '/bar'])
+    ['foo', 'bar']
+
+    """
 
     def inner(*args1, **kwargs1):
         args = args1 + args0
         kwargs = dict(kwargs0, **kwargs1)
-        return f(*args, **kwargs)
+        return func(*args, **kwargs)
     return inner
 
 
 def c(f, g):
+    """..py:function::c(f : callable, g : callable) -> callable
+Returns a new function which is the equivalent to
+`f(g(*args, **kwargs))``
+
+Example:
+
+    >>> from fp import pp, c, getitem
+    >>> map(
+    ...  c(str.lower, pp(getitem, "word")),
+    ...  [{"word": "Xray"}, {"word": "Young"}]
+    ... )
+    ['xray', 'young']
+
+    """
     return lambda x: f(g(x))
 
 
 def t(fs):
-    """Creates a threaded function call
+    """..function::f(fs : [callable]) -> callable
 
-    Where compose is right associative
+Returns a unary thrush function which composes a list of unary functions.
 
+A thrush provides a left associative alternative to `c()`:
+
+    >>> t([f, g, h])(x) == c(h, c(g, f))(x) == f(g(h(x))) # doctest: +SKIP
+    True
+
+Where compose is right associative
+
+
+    >>> from fp import p, c
+    >>> from operator import add, mul
     >>> c(p(mul, 2), p(add, 3))(2)
     10
 
-    The thread partial is left associative
+A thrush partial is left associative
 
-    >>> t([p(add, 3), p(mul, 2)])(2)
+    >>> from fp import p, c, t
+    >>> from operator import add, mul
+    >>> t([
+    ... p(add, 3),
+    ... p(mul, 2)
+    ... ])(2)
     10
-
     """
     head = first(fs)
     tail = irest(fs)
@@ -103,6 +136,21 @@ def t(fs):
     return reduce(
         lambda composed, f: c(f, composed),
         tail, head)
+
+
+def case(*rules):
+    # If the args has a length of one, args[0] is an iterator
+    if len(rules) == 1:
+        rules = rules[0]
+
+    def inner(*args, **kwargs):
+        for pred, f in rules:
+            if pred is True:
+                return f(*args, **kwargs)
+            elif pred(*args, **kwargs):
+                return f(*args, **kwargs)
+        raise RuntimeError("unmatched case")
+    return inner
 
 
 def const(x):

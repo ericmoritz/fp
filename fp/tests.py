@@ -15,19 +15,20 @@ class TestCase(BaseTestCase):
 class TestCaseOp(TestCase):
     def test(self):
         import re
-        from fp import p, ap, c, case, identity
+        from fp import p, pp, c, case, identity
         from operator import concat
 
         add_domain = p(concat, "https://example.com/")
         make_secure = p(re.sub, r"^http://", r"https://")
 
         sanitize_url = case(
-            (ap(str.startswith, "http://"), make_secure),
+            (pp(str.startswith, "http://"), make_secure),
 
-            (ap(str.startswith, "/"), c(add_domain, ap(str.lstrip, "/"))),
+            (pp(str.startswith, "/"), c(add_domain, pp(str.lstrip, "/"))),
 
             (True, add_domain),
         )
+
         self.assertEqual(
             "https://example.com/",
             sanitize_url("http://example.com/"))
@@ -44,10 +45,10 @@ class TestCaseOp(TestCase):
         # describe a case function using a list of rules rather than
         # arguments
         rules = [
-            (ap(str.startswith, "http://"),
+            (pp(str.startswith, "http://"),
              make_secure),
-            (ap(str.startswith, "/"),
-             c(add_domain, ap(str.lstrip, "/"))),
+            (pp(str.startswith, "/"),
+             c(add_domain, pp(str.lstrip, "/"))),
             (True,
              add_domain),
         ]
@@ -68,10 +69,10 @@ class TestCaseOp(TestCase):
         )
 
     def test_unmatched(self):
-        from fp import ap, case, const
+        from fp import pp, case, const
         from operator import lt
         op = case([
-            (ap(lt, 0), const(True))
+            (pp(lt, 0), const(True))
         ])
 
         self.assertRaises(RuntimeError, op, 1)
@@ -136,7 +137,7 @@ class TestPartialPrepend(TestCase):
         def example(a, b, op=op.sub):
             return op(a, b)
 
-        sub_two = fp.ap(example, 2)
+        sub_two = fp.pp(example, 2)
 
         self.assertEqual(4, sub_two(6))
         self.assertEqual(-2, sub_two(0))

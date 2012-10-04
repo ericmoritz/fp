@@ -1,0 +1,36 @@
+:mod:`fp` --- A collection of functional programming inspired utilities
+=======================================================================
+
+.. module:: fp
+   :synopsis: A collection of functional programming inspired
+              utilities
+.. moduleauthor:: Eric Moritz <eric@themoritzfamily.com>
+.. versionadded:: 0.1
+
+the :mod:`fp` module provides a collection of functional programming
+inspired utilities which makes working with `iterators` easier. 
+
+this module supplements the core :mod:`operator`, :mod:`functools`,
+and :mod:`itertools` modules.
+
+**Higher-Order Functions**
+
+Included with :mod:`fp` are higher-order functions which supplement
+those provided by :mod:`functools`.
+
+.. py:function:: fp.p(func : callable[, *args][, **keywords])
+
+   Alias of `functools.partial`
+
+.. autofunction:: fp.pp
+
+.. autofunction:: fp.c
+
+.. autofunction:: fp.t
+
+**Operators**
+
+Included with :mod:`fp` are operators which work with higher order
+functions. These are supplemental functions or replacements for those
+found in :mod:`operator`.
+
