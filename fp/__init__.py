@@ -1,20 +1,27 @@
 """
 Provides a number of operator and higher-order functions for FP fun
 """
+import sys
+import operator
+import itertools
+from six import moves
+import six
+
+if six.PY3:
+    izip_longest = itertools.zip_longest
+else:
+    izip_longest = itertools.izip_longest
+
 
 ####
 # atoms
 ####
 undefined = object()
 
+
 ####
 ## Operators
 ####
-import sys
-import operator
-import itertools
-
-
 def case(*rules):
     # If the args has a length of one, args[0] is an iterator
     if len(rules) == 1:
@@ -100,7 +107,7 @@ def t(fs):
     head = first(fs)
     tail = irest(fs)
 
-    return reduce(
+    return moves.reduce(
         lambda composed, f: c(f, composed),
         tail, head)
 
@@ -204,7 +211,7 @@ def idrop(n, iterable):
 
 
 def first(iterable):
-    return iter(iterable).next()
+    return next(iter(iterable))
 
 
 def irest(iterable):
@@ -218,7 +225,7 @@ def isplitat(i, iterable):
 
 
 def izipwith(f, iterable1, iterable2):
-    return itertools.imap(f, iterable1, iterable2)
+    return moves.map(f, iterable1, iterable2)
 
 
 def ichunk(size, iterable, fillvalue=undefined):
@@ -235,7 +242,7 @@ def ichunk(size, iterable, fillvalue=undefined):
         return chunker()
     else:
         args = [iter(iterable)] * size
-        return itertools.izip_longest(fillvalue=fillvalue, *args)
+        return izip_longest(fillvalue=fillvalue, *args)
 
 
 ####
@@ -246,13 +253,13 @@ def ichunk(size, iterable, fillvalue=undefined):
 def allmap(f, iterable):
     """returns True if all elements of the list satisfy the predicate,
     and False otherwise."""
-    return all(itertools.imap(f, iterable))
+    return all(moves.map(f, iterable))
 
 
 def anymap(f, iterable):
     """returns True if any of the elements of the list satisfy the
     predicate, and False otherwise"""
-    return any(itertools.imap(f, iterable))
+    return any(moves.map(f, iterable))
 
 
 ####
