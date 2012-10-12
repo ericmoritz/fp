@@ -2,7 +2,7 @@ language: python
 python: 
   - "2.7"
   - "3.3"
-befor_script:
+install:
   pip install Sphinx # not required to install
 script:
   make test
