@@ -282,6 +282,12 @@ class TestFirst(TestCase):
     def test_empty(self):
         self.assertRaises(StopIteration, fp.first, [])
 
+    def test_default(self):
+        self.assertEqual(
+            "not-found",
+            fp.first([], "not-found")
+        )
+
 
 class TestIRest(TestCase):
     def test(self):

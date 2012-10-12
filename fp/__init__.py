@@ -210,8 +210,8 @@ def idrop(n, iterable):
     return itertools.islice(iterable, n, None)
 
 
-def first(iterable):
-    return next(iter(iterable))
+def first(iterable, *args):
+    return next(iter(iterable), *args)
 
 
 def irest(iterable):
