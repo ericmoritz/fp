@@ -1,6 +1,8 @@
 This project aims to build a standard collection of functional
 programming inspired tools to Python.
 
+[![Build Status](https://secure.travis-ci.org/ericmoritz/fp.png)](http://travis-ci.org/ericmoritz/fp)
+
 # Goals
 
  * Provide the functions to make compositions of functions using
