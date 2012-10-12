@@ -26,7 +26,13 @@ those provided by :mod:`functools`.
 
 .. autofunction:: fp.c
 
-.. autofunction:: fp.t
+.. autofunction:: fp.const
+
+.. autofunction:: fp.callreturn
+
+.. autofunction:: fp.kwfunc
+
+.. autofunction:: fp.getter
 
 **Operators**
 

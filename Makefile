@@ -5,3 +5,6 @@ html:
 test:
 	python setup.py test
 	cd docs; make doctest
+
+clean:
+	rm -rf docs/build

@@ -4,6 +4,7 @@ A collection of functional programming inspired tools for Python.
 import sys
 import operator
 import itertools
+import inspect
 
 
 ####
@@ -44,6 +45,17 @@ def dictupdate(dct, kv_iterable):
     return inner(dct, kv_iterable)
 
 
+def identity(x):
+    """..function::identity(x) -> x
+
+A function that returns what is passed to it.
+
+    >>> from fp import identity
+    >>> identity()
+    """
+    return x
+
+
 ###
 # Higher-Order functions
 ###
@@ -51,7 +63,8 @@ def dictupdate(dct, kv_iterable):
 from functools import partial as p
 
 def pp(func, *args0, **kwargs0):
-    """..function::pp(func : callable[, *args][, **keywords]) -> partial callable
+    """
+..function::pp(func : callable[, *args][, **keywords]) -> partial callable
 
 Returns an prepended partial function which when called will behave
 like `func` called with the positional arguments `args` and `keywords`
@@ -85,7 +98,7 @@ This is the equivalence to these expressions
 
 
 def c(f, g):
-    """..py:function::c(f : callable, g : callable) -> callable
+    """..function::c(f : callable, g : callable) -> callable
 Returns a new function which is the equivalent to
 `f(g(*args, **kwargs))``
 
@@ -100,42 +113,6 @@ Example:
 
     """
     return lambda x: f(g(x))
-
-
-def t(fs):
-    """..function::f(fs : [callable]) -> callable
-
-Returns a unary thrush function which composes a list of unary functions.
-
-A thrush provides a left associative alternative to `c()`:
-
-    >>> t([f, g, h])(x) == c(h, c(g, f))(x) == f(g(h(x))) # doctest: +SKIP
-    True
-
-Where compose is right associative
-
-
-    >>> from fp import p, c
-    >>> from operator import add, mul
-    >>> c(p(mul, 2), p(add, 3))(2)
-    10
-
-A thrush partial is left associative
-
-    >>> from fp import p, c, t
-    >>> from operator import add, mul
-    >>> t([
-    ... p(add, 3),
-    ... p(mul, 2)
-    ... ])(2)
-    10
-    """
-    head = first(fs)
-    tail = irest(fs)
-
-    return reduce(
-        lambda composed, f: c(f, composed),
-        tail, head)
 
 
 def case(*rules):
@@ -154,27 +131,38 @@ def case(*rules):
 
 
 def const(x):
+    """
+..function::const(x) -> callable
+
+Returns a function which always returns `x`
+
+    >>> from fp import const
+    >>> const('foo')(1, 2, foo='bar')
+    'foo'
+"""
+
     return lambda *args, **kwargs: x
 
 
-def flip(f):
-    return lambda x, y: f(y, x)
-
-
-def identity(x):
-    return x
-
-
 def callreturn(func):
-    """create a function which takes an object with args and kwargs,
-applys func(object, *args, **kwargs) and return object
+    """..function::callreturn(func : callable) -> callable
 
-Useful for non-pure functions which return None instead of the object.
+create a function which applies func(object, *args, **kwargs) and
+returns object
 
-These functions makes compositions difficult.
+Useful for mutation functions which return None instead of the object.
 
-    dictupdate = callreturn(dict.update)
-    assert {"foo": "bar"} = dictupdate({}, [("foo", "bar")])
+These mutation function normally make use with higher-order function
+difficult.
+
+    >>> from fp import callreturn
+    >>> reduce(
+    ...    callreturn(set.add),
+    ...    ["a", "b", "c"],
+    ...    set()
+    ... ) == {"a", "b", "c"}
+    True
+
     """
 
     def inner(obj, *args, **kwargs):
@@ -183,10 +171,47 @@ These functions makes compositions difficult.
     return inner
 
 
-def kwfunc(func, *keys):
+def kwfunc(func, keys=None):
+    """
+..function::kwfunc(func[, keys=None : None | list]) -> callable
+
+Returns a function which applies a dict as kwargs.
+
+Useful for map functions.
+
+    >>> from fp import coalesce, kwfunc
+    >>> def full_name(first=None, last=None):
+    ...     return " ".join(
+    ...        coalesce([first, last])
+    ...     )
+    ...
+    >>> map(
+    ...    kwfunc(full_name),
+    ...    [
+    ...        {"first": "Eric", "last": "Moritz"},
+    ...        {"first": "John"},
+    ...        {"last": "Cane"},
+    ...    ]
+    ... ) == ["Eric Moritz", "John", "Cane"]
+    True
+
+Optionally, needed keys can be passed in:
+
+
+    >>> map(
+    ...    kwfunc(full_name, ["first", "last"]),
+    ...    [
+    ...        {"first": "Eric", "last": "Moritz"},
+    ...        {"first": "Gina", "dob": "1981-08-13"},
+    ...    ]
+    ... ) == ["Eric Moritz", "Gina"]
+    True
+
+"""
+
     if keys:
         def inner(dct):
-            kwargs = {k:dct[k] for k in keys}
+            kwargs = {k:dct[k] for k in keys if k in dct}
             return func(**kwargs)
     else:
         def inner(dct):
@@ -195,23 +220,41 @@ def kwfunc(func, *keys):
     return inner
 
 
-def getter(*args, **kwargs):
-    """Creates a function that digs into a nested data structure or returns
-default if any of the keys are missing
-
-    >>> addresses = [{"address": {"city": "Reston"}},
-    ...              {"address": {"city": "Herndon"}},
-    ...              {"address": {}}]
-    >>>
-    >>> get_city = getter("address", "city")
-    >>> get_cities = p(imap, get_city)
-    >>> list(get_cities(addresses))
-    ["Reston", "Herndon", None]
+def getter(*args):
     """
-    default = kwargs.pop("default", None)
+..function::getter(*keys) ->  callable(object[, default=None])
+Creates a function that digs into a nested data structure or returns
+default if any of the keys are missing or the key references an
+object without __getitem__ (list, dict, etc)
 
-    def inner(obj):
+    >>> from fp import getter
+    >>> get_city = getter("cities", 0, "name")
+    >>> get_city(
+    ...    {
+    ...      "cities": [{"name": 'Reston'}]
+    ...    }
+    ... )
+    'Reston'
+    >>> get_city(
+    ...    {
+    ...      "cities": [{}]
+    ...    }
+    ... ) is None
+    True
+    >>> get_city(
+    ...    {
+    ...      "cities": [{}]
+    ...    },
+    ...    default="not found"
+    ... ) is "not found"
+    True
+    """
+    def inner(obj, default=None):
         for arg in args:
+            # If we hit a non-container object, return default
+            if not hasattr(obj, "__getitem__"):
+                return default
+
             obj = getitem(obj, arg, default=undefined)
             if obj is undefined:
                 return default
@@ -284,6 +327,12 @@ def ichunk(size, iterable, fillvalue=undefined):
     else:
         args = [iter(iterable)] * size
         return itertools.izip_longest(fillvalue=fillvalue, *args)
+
+
+def coalesce(items):
+    return itertools.ifilter(
+        lambda x: x is not None,
+        items)
 
 
 ####

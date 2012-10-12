@@ -1,4 +1,5 @@
 from unittest import TestCase as BaseTestCase
+import unittest
 from collections import Iterator
 import fp
 import operator as op
@@ -165,26 +166,6 @@ class TestCompose(TestCase):
                          add_three_and_double2(2))
 
 
-class TestThread(TestCase):
-
-    def test(self):
-        from fp import t, p
-        from operator import mul, add
-
-        add_three_and_double1 = t([
-            lambda x: x + 3,
-            lambda x: x * 2])
-
-        add_three_and_double2 = t([p(add, 3),
-                                   p(mul, 2)])
-
-        self.assertEqual(10,
-                         add_three_and_double1(2))
-
-        self.assertEqual(10,
-                         add_three_and_double2(2))
-
-
 class TestConst(TestCase):
 
     def test(self):
@@ -192,16 +173,6 @@ class TestConst(TestCase):
 
         self.assertEqual("hi",
                          say_hi(1, a=1))
-
-
-class TestFlip(TestCase):
-
-    def test(self):
-        def f(x, y):
-            return x, y
-
-        self.assertEqual((2, 1),
-                         fp.flip(f)(1, 2))
 
 
 class TestIdentity(TestCase):
@@ -439,8 +410,6 @@ class TestAnyMap(TestCase):
 class TestGetter(TestCase):
 
     def test(self):
-        from fp import getitem, t, c
-
         get_city = fp.getter("addresses", 0, "city")
 
         self.assertEqual("Reston",
@@ -452,6 +421,30 @@ class TestGetter(TestCase):
         self.assertEqual(None,
                          get_city({"addresses": [{}]}))
 
+        self.assertEqual(
+            "not found",
+            get_city(
+                {"addresses": [{}]},
+                default="not found"
+            )
+        )
+
+    def test_nonconatiner(self):
+        get_city = fp.getter(
+            "addresses", 0, "city",
+         )
+
+        self.assertEqual(
+            "not found",
+            get_city(
+                {
+                    "addresses": [None]
+                },
+                default="not found"
+            )
+        )
+
+
 
 
 
@@ -459,7 +452,7 @@ class TestKWUnary(TestCase):
     def test_simple(self):
         from fp import kwfunc
 
-        def func(a=None, b=None):
+        def func(a=0, b=0):
             return a + b
 
         mapper = kwfunc(func)
@@ -469,13 +462,13 @@ class TestKWUnary(TestCase):
             mapper({"a": 2, "b": 3})
         )
 
-    def test_restricted(self):
+    def test_keys(self):
         from fp import kwfunc
 
-        def func(a=None, b=None):
+        def func(a=0, b=0):
             return a + b
 
-        mapper = kwfunc(func, "a", "b")
+        mapper = kwfunc(func, ["a", "b"])
 
         # a naive call using func(**kwargs)
         # would raise an error but put a bound
@@ -483,6 +476,11 @@ class TestKWUnary(TestCase):
         self.assertEqual(
             5,
             mapper({"a": 2, "b": 3, "c": 4})
+        )
+
+        self.assertEqual(
+            2,
+            mapper({"a": 2})
         )
 
 ####
