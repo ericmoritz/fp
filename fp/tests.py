@@ -7,7 +7,7 @@ from six import moves
 
 class TestCase(BaseTestCase):
     def assert_iterator(self, obj):
-        self.assertIsInstance(obj, Iterator)
+        self.assertTrue(isinstance(obj, Iterator))
 
 
 ##
@@ -414,7 +414,7 @@ class TestDictUpdate(TestCase):
             result)
 
         # mergedict updates in place, start is the same dict as result
-        self.assertIs(start, result)
+        self.assertTrue(start is result)
 
 # bookmark
 

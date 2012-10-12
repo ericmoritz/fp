@@ -145,7 +145,7 @@ These functions makes compositions difficult.
 def kwfunc(func, *keys):
     if keys:
         def inner(dct):
-            kwargs = {k:dct[k] for k in keys}
+            kwargs = dict(((k, dct[k]) for k in keys))
             return func(**kwargs)
     else:
         def inner(dct):
