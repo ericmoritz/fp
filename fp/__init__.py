@@ -13,52 +13,10 @@ import inspect
 undefined = object()
 
 
-####
-## Operators
-####
-
-
-def getitem(obj, *args, **kwargs):
-    default = kwargs.pop("default", None)
-
-    try:
-        return operator.getitem(obj, *args, **kwargs)
-    except (KeyError, IndexError):
-        return default
-
-
-def setitem(obj, *args, **kwargs):
-    inner = callreturn(operator.setitem)
-    return inner(obj, *args, **kwargs)
-
-
-def delitem(obj, *args, **kwargs):
-    try:
-        operator.delitem(obj, *args, **kwargs)
-    except KeyError:
-        pass
-    return obj
-
-
-def dictupdate(dct, kv_iterable):
-    inner = callreturn(dict.update)
-    return inner(dct, kv_iterable)
-
-
-def identity(x):
-    """..function::identity(x) -> x
-
-A function that returns what is passed to it.
-
-    >>> from fp import identity
-    >>> identity()
-    """
-    return x
-
-
 ###
 # Higher-Order functions
 ###
+
 
 from functools import partial as p
 
@@ -147,7 +105,7 @@ Returns a function which always returns `x`
 def callreturn(func):
     """..function::callreturn(func : callable) -> callable
 
-create a function which applies func(object, *args, **kwargs) and
+create a function which applies `func(object, *args, **kwargs)` and
 returns object
 
 Useful for mutation functions which return None instead of the object.
@@ -261,6 +219,132 @@ object without __getitem__ (list, dict, etc)
         return obj
 
     return inner
+
+
+####
+## Operators
+####
+
+
+def getitem(obj, key, default=None):
+    """..function::getitem(obj, key[, default=None]) -> value
+
+Returns the value indexed at "key" or returns `default`
+
+Works on anything that has a `__getitem__` method and raises a KeyError
+or IndexError when the key is not found.
+
+    >>> getitem({"foo": "bar"}, "foo")
+    'bar'
+
+    >>> getitem({"foo": "bar"}, "baz") is None
+    True
+
+    >>> getitem({"foo": "bar"}, "baz", default="not-here")
+    'not-here'
+
+    >>> getitem([1], 0)
+    1
+
+    >>> getitem([1], 1) is None
+    True
+
+    >>> getitem([1], 1, default="not-here")
+    'not-here'
+
+    """
+    try:
+        return operator.getitem(obj, key)
+    except (KeyError, IndexError):
+        return default
+
+
+def setitem(obj, key, value):
+    """
+..function::setitem(obj, key, value) -> obj
+
+Sets the `key` to `value` and returns the mutated object
+
+    >>> from fp import setitem
+    >>> setitem({}, "foo", "bar")
+    {'foo': 'bar'}
+
+Unlike functional languages, the returned object is not a copy of the
+inputted object:
+
+    >>> data = {}
+    >>> setitem(data, "foo", "bar") is data
+    True
+
+"""
+
+    inner = callreturn(operator.setitem)
+    return inner(obj, key, value)
+
+
+def delitem(obj, key):
+    """
+..function::delitem(obj, key) -> obj
+
+Deletes the key from the `obj` and returns `obj`
+
+Unlike `del obj[key]`, this function silently suppresses
+the KeyError when a key does not exist. If you need that functionality
+use `operator.delitem`
+
+Example:
+
+    >>> from fp import delitem
+    >>> delitem({"foo": "bar"}, "foo")
+    {}
+
+    >>> delitem({"foo": "bar"}, "baz")
+    {'foo': 'bar'}
+
+Just like setitem, the returned object is the same object:
+
+    >>> data = {"foo": "bar"}
+    >>> delitem(data, "foo") is data
+    True
+"""
+
+    try:
+        operator.delitem(obj, key)
+    except KeyError:
+        pass
+    return obj
+
+
+def dictupdate(dct, kv_iterable):
+    """
+..function::dictupdate(dct, kv_iterable) -> dct
+
+This is a shortcut to `callreturn(dict.update)`
+
+Updates `dct` with the list of (key, value) pairs in
+`kv_iterable`.
+
+    >>> from fp import dictupdate
+    >>> dictupdate({}, [("foo", "bar"), ("baz", "bazinga")])
+    {'foo': 'bar', 'baz': 'bazinga'}
+
+Again, the returned value is `dct` and not a copy of `dct`.
+
+"""
+    inner = callreturn(dict.update)
+    return inner(dct, kv_iterable)
+
+
+def identity(x):
+    """..function::identity(x) -> x
+
+A function that returns what is passed to it.
+
+    >>> from fp import identity
+    >>> identity(1)
+    1
+    """
+    return x
 
 
 ###

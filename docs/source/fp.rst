@@ -40,3 +40,13 @@ Included with :mod:`fp` are operators which work with higher order
 functions. These are supplemental functions or replacements for those
 found in :mod:`operator`.
 
+.. autofunction:: fp.getitem
+
+.. autofunction:: fp.setitem
+
+.. autofunction:: fp.delitem
+
+.. autofunction:: fp.dictupdate
+
+.. autofunction:: fp.identity
+
