@@ -36,3 +36,5 @@ nosetests.xml
 
 # Build dir
 build
+# virtualenvs
+envs/
