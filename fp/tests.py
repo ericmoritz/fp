@@ -70,56 +70,15 @@ class TestCaseOp(TestCase):
         )
 
     def test_unmatched(self):
-        from fp import pp, case, const
+        from fp import pp, case, constantly
         from operator import lt
         op = case([
-            (pp(lt, 0), const(True))
+            (pp(lt, 0), constantly(True))
         ])
 
         self.assertRaises(RuntimeError, op, 1)
 
 
-class TestGetItem(TestCase):
-    def test(self):
-        x = {"foo": 1}
-
-        self.assertEqual(
-            1,
-            fp.getitem(x, "foo")
-        )
-
-        self.assertEqual(
-            None,
-            fp.getitem(x, "bar")
-        )
-
-        self.assertEqual(
-            0,
-            fp.getitem(x, "bar", default=0)
-        )
-
-
-class TestSetItem(TestCase):
-    def test(self):
-        x = {}
-        self.assertEqual(
-            {"foo": 1},
-            fp.setitem(x, "foo", 1)
-        )
-
-
-class TestDelItem(TestCase):
-    def test(self):
-        x = {"foo": 1}
-        self.assertEqual(
-            {},
-            fp.delitem(x, "foo")
-        )
-
-        self.assertEqual(
-            {},
-            fp.delitem({}, "foo")
-        )
 ##
 # Partials
 ##
@@ -166,10 +125,10 @@ class TestCompose(TestCase):
                          add_three_and_double2(2))
 
 
-class TestConst(TestCase):
+class TestConstantly(TestCase):
 
     def test(self):
-        say_hi = fp.const("hi")
+        say_hi = fp.constantly("hi")
 
         self.assertEqual("hi",
                          say_hi(1, a=1))
@@ -185,43 +144,6 @@ class TestIdentity(TestCase):
 ####
 ## Generator functions
 ####
-
-
-class TestISlice(TestCase):
-
-    def test_badarglen(self):
-        self.assertRaises(TypeError, fp.islice)
-        self.assertRaises(TypeError, fp.islice, 1, 2, 3, 4, 5)
-
-    def test_start(self):
-        result = fp.islice(
-            1, xrange(5)
-        )
-
-        self.assert_iterator(result)
-        self.assertEqual(
-            [1, 2, 3, 4],
-            list(result)
-        )
-
-    def test_start_stop(self):
-        result = fp.islice(
-            1, 3, xrange(5)
-        )
-
-        self.assert_iterator(result)
-        self.assertEqual(
-            [1, 2],
-            list(result)
-        )
-
-    def test_start_stop_step(self):
-        result = fp.islice(
-            1, None, 2,
-            xrange(10)
-        )
-
-        self.assert_iterator(result)
 
 
 class TestITake(TestCase):
@@ -243,25 +165,6 @@ class TestIDrop(TestCase):
         self.assertEqual(
             [3, 4, 5],
             list(fp.idrop(3, range(6))))
-
-
-class TestFirst(TestCase):
-    def test(self):
-        self.assertEqual(1,
-                         fp.first(xrange(1, 10)))
-
-    def test_empty(self):
-        self.assertRaises(StopIteration, fp.first, [])
-
-
-class TestIRest(TestCase):
-    def test(self):
-        rest = fp.irest(xrange(1, 10))
-
-        self.assert_iterator(rest)
-
-        self.assertEqual([2, 3, 4, 5, 6, 7, 8, 9],
-                         list(rest))
 
 
 class TestISplitAt(TestCase):
@@ -367,27 +270,6 @@ class TestIChunk(TestCase):
 ##
 # Reducers
 ##
-
-class TestDictUpdate(TestCase):
-    def test(self):
-        start = {}
-        result = fp.dictupdate(
-            start,
-            [
-                ("key1", "val1"),
-                ("key2", "val2"),
-            ]
-        )
-
-        self.assertEqual(
-            {"key1": "val1",
-             "key2": "val2"},
-            result)
-
-        # mergedict updates in place, start is the same dict as result
-        self.assertIs(start, result)
-
-# bookmark
 
 
 class TestAllMap(TestCase):

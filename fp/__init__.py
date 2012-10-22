@@ -88,14 +88,15 @@ def case(*rules):
     return inner
 
 
-def const(x):
+def constantly(x):
     """
-..function::const(x) -> callable
+..function::constantly(x) -> callable
 
 Returns a function which always returns `x`
+regardless of arguments
 
-    >>> from fp import const
-    >>> const('foo')(1, 2, foo='bar')
+    >>> from fp import constantly
+    >>> constantly('foo')(1, 2, foo='bar')
     'foo'
 """
 
@@ -231,8 +232,9 @@ def getitem(obj, key, default=None):
 
 Returns the value indexed at "key" or returns `default`
 
-Works on anything that has a `__getitem__` method and raises a KeyError
-or IndexError when the key is not found.
+This differs from `operator.getitem` in that it never returns a
+KeyError or IndexError, which could be problematic when used with
+map() or other higher-ordered functions.
 
     >>> getitem({"foo": "bar"}, "foo")
     'bar'
@@ -260,8 +262,7 @@ or IndexError when the key is not found.
 
 
 def setitem(obj, key, value):
-    """
-..function::setitem(obj, key, value) -> obj
+    """..function::setitem(obj, key, value) -> obj
 
 Sets the `key` to `value` and returns the mutated object
 
@@ -276,7 +277,10 @@ inputted object:
     >>> setitem(data, "foo", "bar") is data
     True
 
-"""
+This differs from `operator.setitem` in that it returns the mutated
+object rather than None.  This helps when mutating a lis
+
+    """
 
     inner = callreturn(operator.setitem)
     return inner(obj, key, value)
@@ -315,26 +319,6 @@ Just like setitem, the returned object is the same object:
     return obj
 
 
-def dictupdate(dct, kv_iterable):
-    """
-..function::dictupdate(dct, kv_iterable) -> dct
-
-This is a shortcut to `callreturn(dict.update)`
-
-Updates `dct` with the list of (key, value) pairs in
-`kv_iterable`.
-
-    >>> from fp import dictupdate
-    >>> dictupdate({}, [("foo", "bar"), ("baz", "bazinga")])
-    {'foo': 'bar', 'baz': 'bazinga'}
-
-Again, the returned value is `dct` and not a copy of `dct`.
-
-"""
-    inner = callreturn(dict.update)
-    return inner(dct, kv_iterable)
-
-
 def identity(x):
     """..function::identity(x) -> x
 
@@ -348,45 +332,54 @@ A function that returns what is passed to it.
 
 
 ###
-## generators
+## iterators
 ###
 
 
-def islice(*args):
-    arg_len = len(args)
-    start, stop, step = None, None, None
-
-    if arg_len == 2:
-        start, iterable = args
-    elif arg_len == 3:
-        start, stop, iterable = args
-    elif arg_len == 4:
-        start, stop, step, iterable = args
-    else:
-        raise TypeError(
-            ("islice() takes at between 2 and 4 arguments"
-             " %s given") % (arg_len)
-        )
-    return itertools.islice(iterable, start, stop, step)
-
-
 def itake(n, iterable):
-    return islice(0, n, iterable)
+    """
+Takes n items off the iterable:
+
+    >>> from fp import itake
+    >>> list(itake(3, xrange(5)))
+    [0, 1, 2]
+
+    >>> list(itake(3, []))
+    []
+    """
+    return itertools.islice(iterable, 0, n)
 
 
 def idrop(n, iterable):
+    """..function::idrop(n, iterable)
+
+Drops the first `n` items off the iterator
+
+    >>> from fp import idrop
+    >>> list(idrop(3, xrange(6)))
+    [3, 4, 5]
+
+    >>> list(idrop(3, []))
+    []
+    """
     return itertools.islice(iterable, n, None)
 
 
-def first(iterable):
-    return iter(iterable).next()
-
-
-def irest(iterable):
-    return idrop(1, iterable)
-
-
 def isplitat(i, iterable):
+    """..function::isplitat(i, iterable)
+
+yields two iterators split at index `i`
+
+    >>> from fp import isplitat
+    >>> def materalize(chunks):
+    ...    "Turns a iterator of iterators into a list of lists"
+    ...    return map(list, chunks)
+    >>> materalize(
+    ...     isplitat(3, range(6))
+    ... )
+    [[0, 1, 2], [3, 4, 5]]
+    """
+
     iterator = iter(iterable)
     yield itake(i, iterator)
     yield iterator
