@@ -3,11 +3,12 @@ import unittest
 from collections import Iterator
 import fp
 import operator as op
+from six import moves
 
 
 class TestCase(BaseTestCase):
     def assert_iterator(self, obj):
-        self.assertIsInstance(obj, Iterator)
+        self.assertTrue(isinstance(obj, Iterator))
 
 
 ##
@@ -149,7 +150,7 @@ class TestIdentity(TestCase):
 class TestITake(TestCase):
 
     def test(self):
-        result = fp.itake(3, xrange(0, 10))
+        result = fp.itake(3, moves.xrange(0, 10))
 
         self.assert_iterator(result)
 
@@ -207,7 +208,7 @@ class TestIChunk(TestCase):
     def test(self):
         result = fp.ichunk(
             3,
-            xrange(1, 10)
+            moves.xrange(1, 10)
         )
 
         self.assert_iterator(result)
@@ -224,7 +225,7 @@ class TestIChunk(TestCase):
     def test_uneven(self):
        result = fp.ichunk(
            3,
-           xrange(1, 11)
+           moves.xrange(1, 11)
        )
 
        self.assert_iterator(result)
@@ -247,7 +248,7 @@ class TestIChunk(TestCase):
                 (7, 8, 9),
                 (10, 0, 0)
             ],
-            list(fp.ichunk(3, xrange(1, 11), fillvalue=0))
+            list(fp.ichunk(3, moves.xrange(1, 11), fillvalue=0))
         )
 
     def test_fillvalue_even(self):
@@ -257,7 +258,7 @@ class TestIChunk(TestCase):
                 (4, 5, 6),
                 (7, 8, 9),
              ],
-            list(fp.ichunk(3, xrange(1, 10), fillvalue=0))
+            list(fp.ichunk(3, moves.xrange(1, 10), fillvalue=0))
         )
 
     def test_empty(self):
@@ -277,8 +278,8 @@ class TestAllMap(TestCase):
     def test(self):
         from fp import even, odd, allmap
 
-        self.assertTrue(allmap(even, xrange(2, 10, 2)))
-        self.assertFalse(allmap(odd, xrange(2, 10, 2)))
+        self.assertTrue(allmap(even, moves.xrange(2, 10, 2)))
+        self.assertFalse(allmap(odd, moves.xrange(2, 10, 2)))
 
 
 class TestAnyMap(TestCase):
@@ -325,9 +326,6 @@ class TestGetter(TestCase):
                 default="not found"
             )
         )
-
-
-
 
 
 class TestKWUnary(TestCase):

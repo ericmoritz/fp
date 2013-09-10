@@ -33,8 +33,11 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+<<<<<<< HEAD
 
 # Build dir
 build
 # virtualenvs
+=======
+>>>>>>> develop
 envs/

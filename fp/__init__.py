@@ -4,14 +4,19 @@ A collection of functional programming inspired tools for Python.
 import sys
 import operator
 import itertools
-import inspect
+from six import moves
+import six
+
+if six.PY3:
+    izip_longest = itertools.zip_longest
+else:
+    izip_longest = itertools.izip_longest
 
 
 ####
 # atoms
 ####
 undefined = object()
-
 
 ###
 # Higher-Order functions
@@ -386,7 +391,7 @@ yields two iterators split at index `i`
 
 
 def izipwith(f, iterable1, iterable2):
-    return itertools.imap(f, iterable1, iterable2)
+    return moves.map(f, iterable1, iterable2)
 
 
 def ichunk(size, iterable, fillvalue=undefined):
@@ -403,7 +408,7 @@ def ichunk(size, iterable, fillvalue=undefined):
         return chunker()
     else:
         args = [iter(iterable)] * size
-        return itertools.izip_longest(fillvalue=fillvalue, *args)
+        return izip_longest(fillvalue=fillvalue, *args)
 
 
 def coalesce(items):
@@ -420,13 +425,13 @@ def coalesce(items):
 def allmap(f, iterable):
     """returns True if all elements of the list satisfy the predicate,
     and False otherwise."""
-    return all(itertools.imap(f, iterable))
+    return all(moves.map(f, iterable))
 
 
 def anymap(f, iterable):
     """returns True if any of the elements of the list satisfy the
     predicate, and False otherwise"""
-    return any(itertools.imap(f, iterable))
+    return any(moves.map(f, iterable))
 
 
 ####

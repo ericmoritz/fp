@@ -19,6 +19,7 @@ that brings the the beauty of FP to Python""",
       zip_safe=False,
       install_requires=[
           # -*- Extra requirements: -*-
+          "six",
       ],
       test_suite="fp.tests",
       entry_points="""
