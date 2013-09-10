@@ -1,7 +1,7 @@
-from fp.monads.monad import Monad, MonadIter
+from fp.monads.monad import Monad, MonadIter, MonadPlus
 
 
-class Maybe(Monad, MonadIter):
+class Maybe(Monad, MonadIter, MonadPlus):
     """
     A Maybe monad.
     """
@@ -110,6 +110,19 @@ class Maybe(Monad, MonadIter):
             if maybe.is_just:
                 yield maybe.__value
 
+    @staticmethod
+    def error_to_nothing(f):
+        """
+        Converts a function that raises an exception of any kind to
+        Maybe(None).
+        """
+        def inner(*args, **kwargs):
+            try:
+                return Maybe(f(*args, **kwargs))
+            except:
+                return Maybe(None)
+        return inner
+    
     ##=====================================================================
     ## Monad methods
     ##=====================================================================
@@ -156,16 +169,14 @@ class Maybe(Monad, MonadIter):
         ... )
         Maybe('baz')
 
-
         Failure on the first key:
 
         >>> Maybe.from_iterable(
         ...    val
         ...    for inner in lookup(data, "fud")
         ...    for val   in lookup(inner, "baz")
-        ... ) == Maybe(None)
-        True
-
+        ... )
+        Maybe(None)
 
         Failure on the second key:
 
@@ -173,8 +184,8 @@ class Maybe(Monad, MonadIter):
         ...    val
         ...    for inner in lookup(data, "foo")
         ...    for val   in lookup(inner, "bong")
-        ... ) == Maybe(None)
-        True
+        ... )
+        Maybe(None)
         """
         if self.is_just:
             return iter([self.__value])
@@ -186,6 +197,35 @@ class Maybe(Monad, MonadIter):
         for x in iterable:
             return Maybe(x)
         return Maybe(None)
+
+    ##=====================================================================
+    ## MonadPlus methods
+    ##=====================================================================
+    def mplus(self, y):
+        """
+        An associative operation.  We're not 
+        >>> Maybe(1).mplus(Maybe.mzero)
+        Maybe(1)
+
+        >>> Maybe.mzero.mplus(Maybe(2))
+        Maybe(2)
+
+        >>> Maybe.msum([Maybe(1), Maybe(None), Maybe(2)])
+        Maybe(1)
+
+        >>> Maybe.msum([Maybe(None), Maybe(None), Maybe(2)])
+        Maybe(2)
+
+        >>> Maybe.msum([Maybe(None), Maybe(None), Maybe(None)])
+        Maybe(None)
+
+        """
+        if self.is_just:
+            return self
+        else:
+            return y
+
+Maybe.mzero = Maybe(None)
 
 if __name__ == '__main__':
     import pytest, sys
