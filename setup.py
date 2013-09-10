@@ -21,7 +21,6 @@ that brings the the beauty of FP to Python""",
           # -*- Extra requirements: -*-
           "six",
       ],
-      test_suite="fp.tests",
       entry_points="""
       # -*- Entry points: -*-
       """,

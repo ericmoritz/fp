@@ -3,11 +3,11 @@ html:
 	cd docs; make html
 
 test:
-	python setup.py test
+	py.test --doctest-modules fp/ fp/tests.py
 	@make doctest
 
 doctest: doc-deps
-	cd docs; make doctest
+	@make -C docs/ doctest
 
 doc-deps:
 	pip install sphinx

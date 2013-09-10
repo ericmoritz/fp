@@ -13,7 +13,10 @@ class Maybe(Monad, MonadIter):
         self.__value = value
 
     def __eq__(self, other):
-        return self.__value == self.__other
+        return self.__value == other.__value
+
+    def __repr__(self):
+        return "Maybe({0!r})".format(self.__value)
 
     @property
     def is_just(self):
@@ -51,12 +54,14 @@ class Maybe(Monad, MonadIter):
         1
 
         >>> Maybe(None).from_just
-        ValueError....
+        Traceback (most recent call last):
+            ...
+        ValueError: Maybe.from_just called on Nothing
         """
         if self.is_just:
             return self.__value
         else:
-            raise ValueError("Can't call from_just on a Nothing.")
+            raise ValueError("Maybe.from_just called on Nothing")
 
     def default(self, default_value):
         """
@@ -120,10 +125,10 @@ class Maybe(Monad, MonadIter):
         >>> Maybe(None).bind(crashy).is_nothing
         1
         """
-        if self.is_just():
-            return None
+        if self.is_just:
+            return f(self.__value)
         else:
-            return f(self.value)
+            return self
 
     ##=====================================================================
     ## MonadIter methods
@@ -133,6 +138,12 @@ class Maybe(Monad, MonadIter):
         The MonadIter.__iter__ function to enable monadic exploitation
         of list generators:
 
+        >>> list(Maybe(1))
+        [1]
+
+        >>> list(Maybe(None))
+        []
+
         >>> def lookup(d, x):
         ...     return Maybe(d.get(x))
         >>> data = {"foo": {"bar": "baz"}}
@@ -141,9 +152,9 @@ class Maybe(Monad, MonadIter):
         >>> Maybe.from_iterable(
         ...    val
         ...    for inner in lookup(data, "foo")
-        ...    for val   in lookup(inner, "baz")
-        ... ) == Maybe("baz")
-        True
+        ...    for val   in lookup(inner, "bar")
+        ... )
+        Maybe('baz')
 
 
         Failure on the first key:
@@ -165,9 +176,8 @@ class Maybe(Monad, MonadIter):
         ... ) == Maybe(None)
         True
         """
-
-        if self.is_just():
-            return iter([self.value])
+        if self.is_just:
+            return iter([self.__value])
         else:
             return iter([])
 
@@ -177,3 +187,6 @@ class Maybe(Monad, MonadIter):
             return Maybe(x)
         return Maybe(None)
 
+if __name__ == '__main__':
+    import pytest, sys
+    sys.exit(pytest.main(["--doctest-modules", __file__]))
