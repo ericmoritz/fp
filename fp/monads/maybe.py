@@ -4,6 +4,76 @@ from fp.monads.monad import Monad, MonadIter, MonadPlus
 class Maybe(Monad, MonadIter, MonadPlus):
     """
     A Maybe monad.
+
+    Examples:
+
+    >>> Maybe.sequence([Just(1), Nothing, Just(2)])    
+    Nothing
+
+    >>> Maybe.sequence([Just(1), Just(2)])
+    Just([1, 2])
+
+    >>> Maybe.sequence_dict({"foo": Just(1), "bar": Just(2)})
+    Just({'foo': 1, 'bar': 2})
+
+    >>> maybe_int = Maybe.error_to_nothing(int)
+    >>> Maybe.mapM(maybe_int, ["1", "2"])
+    Just([1, 2])
+
+    >>> Maybe.mapM(maybe_int, ["1", "a"])
+    Nothing
+
+
+
+    Left to Right arrow composition.  maybe cast the string as an int, then maybe add 1
+
+    >>> string_to_plus1 = Maybe.arrow_cl(maybe_int, lambda x: Maybe(x+1))
+    >>> string_to_plus1("1")
+    Just(2)
+
+
+    Right to Left arrow composition.  maybe cast the string as an int, then maybe add 1
+
+    >>> string_to_plus1 = Maybe.arrow_cr(lambda x: Maybe(x+1), maybe_int)
+    >>> string_to_plus1("1")
+    Just(2)
+
+    >>> Maybe.ap(lambda x: x+1, Just(1))
+    Just(2)
+
+    >>> Maybe.ap(lambda x: x+1, Nothing)
+    Nothing
+    
+    >>> import operator
+    >>> Maybe.ap(operator.add, Just(1), Just(2))
+    Just(3)
+
+    >>> Maybe.ap(operator.add, Nothing, Just(2))
+    Nothing
+
+    >>> Maybe.ap(operator.add, Just(1), Nothing)
+    Nothing
+
+    >>> from datetime import timedelta
+    >>> Maybe.ap(timedelta, days=Just(1), seconds=Just(60))
+    Just(datetime.timedelta(1, 60))
+
+    >>> from fp.monads.maybe import Maybe
+    >>> from fp import even, c, p
+    >>> maybeInt = Maybe.error_to_nothing(int) # convert int to a Maybe arrow
+    >>> maybeEven = p(Maybe.ap, even) # lift even into Maybe
+    >>> Maybe.filterM(c(maybeEven, maybeInt), ["x","1","2","3","4"])
+    Just(['2', '4'])
+
+    >>> Maybe.msum([Maybe(1), Nothing, Maybe(2)])
+    Just(1)
+
+    >>> Maybe.msum([Nothing, Nothing, Maybe(2)])
+    Just(2)
+
+    >>> Maybe.msum([Nothing, Nothing, Nothing])
+    Nothing
+
     """
 
     ##=====================================================================
@@ -16,17 +86,20 @@ class Maybe(Monad, MonadIter, MonadPlus):
         return self.__value == other.__value
 
     def __repr__(self):
-        return "Maybe({0!r})".format(self.__value)
+        if self.is_just:
+            return "Just({0!r})".format(self.__value)
+        else:
+            return "Nothing"
 
     @property
     def is_just(self):
         """
         Tests if the Maybe is just a value
 
-        >>> Maybe(1).is_just
+        >>> Just(1).is_just
         True
 
-        >>> Maybe(None).is_just
+        >>> Nothing.is_just
         False
         """
         return self.__value is not None
@@ -36,10 +109,10 @@ class Maybe(Monad, MonadIter, MonadPlus):
         """
         Tests if the Maybe is Nothing
         
-        >>> Maybe(None).is_nothing
+        >>> Nothing.is_nothing
         True
 
-        >>> Maybe(1).is_nothing
+        >>> Just(1).is_nothing
         False
         """
         return not self.is_just
@@ -50,10 +123,10 @@ class Maybe(Monad, MonadIter, MonadPlus):
         Extracts the just value from the Maybe; raises a ValueError
         if the value is None
 
-        >>> Maybe(1).from_just
+        >>> Just(1).from_just
         1
 
-        >>> Maybe(None).from_just
+        >>> Nothing.from_just
         Traceback (most recent call last):
             ...
         ValueError: Maybe.from_just called on Nothing
@@ -67,10 +140,10 @@ class Maybe(Monad, MonadIter, MonadPlus):
         """
         Returns the just value or the default value if Nothing
 
-        >>> Maybe(1).default(-1)
+        >>> Just(1).default(-1)
         1
 
-        >>> Maybe(None).default(-1)
+        >>> Nothing.default(-1)
         -1
         """
         if self.is_just:
@@ -84,7 +157,7 @@ class Maybe(Monad, MonadIter, MonadPlus):
         Returns an iterator of the Just values
         
         >>> list(Maybe.cat_maybes([
-        ...     Maybe(1), Maybe(None), Maybe(2)
+        ...     Just(1), Nothing, Just(2)
         ... ]))
         [1, 2]
         """
@@ -99,9 +172,9 @@ class Maybe(Monad, MonadIter, MonadPlus):
 
         >>> def maybe_even(x):
         ...     if x % 2 == 0:
-        ...         return Maybe(x)
+        ...         return Just(x)
         ...     else:
-        ...         return Maybe(None)
+        ...         return Nothing
         >>> list(Maybe.map_maybes(maybe_even, [1,2,3,4]))
         [2, 4]
         """
@@ -114,13 +187,13 @@ class Maybe(Monad, MonadIter, MonadPlus):
     def error_to_nothing(f):
         """
         Converts a function that raises an exception of any kind to
-        Maybe(None).
+        Nothing.
         """
         def inner(*args, **kwargs):
             try:
-                return Maybe(f(*args, **kwargs))
+                return Just(f(*args, **kwargs))
             except:
-                return Maybe(None)
+                return Nothing
         return inner
     
     ##=====================================================================
@@ -130,12 +203,12 @@ class Maybe(Monad, MonadIter, MonadPlus):
         """
         The Maybe's bind function
 
-        >>> Maybe(1).bind(lambda x: Maybe(x)).from_just
+        >>> Just(1).bind(lambda x: Maybe(x)).from_just
         1
         
         >>> def crashy(x):
         ...     assert False, "bind will not call me"
-        >>> Maybe(None).bind(crashy).is_nothing
+        >>> Nothing.bind(crashy).is_nothing
         1
         """
         if self.is_just:
@@ -151,10 +224,10 @@ class Maybe(Monad, MonadIter, MonadPlus):
         The MonadIter.__iter__ function to enable monadic exploitation
         of list generators:
 
-        >>> list(Maybe(1))
+        >>> list(Just(1))
         [1]
 
-        >>> list(Maybe(None))
+        >>> list(Nothing)
         []
 
         >>> def lookup(d, x):
@@ -167,7 +240,7 @@ class Maybe(Monad, MonadIter, MonadPlus):
         ...    for inner in lookup(data, "foo")
         ...    for val   in lookup(inner, "bar")
         ... )
-        Maybe('baz')
+        Just('baz')
 
         Failure on the first key:
 
@@ -176,7 +249,7 @@ class Maybe(Monad, MonadIter, MonadPlus):
         ...    for inner in lookup(data, "fud")
         ...    for val   in lookup(inner, "baz")
         ... )
-        Maybe(None)
+        Nothing
 
         Failure on the second key:
 
@@ -185,7 +258,7 @@ class Maybe(Monad, MonadIter, MonadPlus):
         ...    for inner in lookup(data, "foo")
         ...    for val   in lookup(inner, "bong")
         ... )
-        Maybe(None)
+        Nothing
         """
         if self.is_just:
             return iter([self.__value])
@@ -196,7 +269,7 @@ class Maybe(Monad, MonadIter, MonadPlus):
     def from_iterable(cls, iterable):
         for x in iterable:
             return Maybe(x)
-        return Maybe(None)
+        return Nothing
 
     ##=====================================================================
     ## MonadPlus methods
@@ -205,27 +278,21 @@ class Maybe(Monad, MonadIter, MonadPlus):
         """
         An associative operation.  We're not 
         >>> Maybe(1).mplus(Maybe.mzero)
-        Maybe(1)
+        Just(1)
 
         >>> Maybe.mzero.mplus(Maybe(2))
-        Maybe(2)
-
-        >>> Maybe.msum([Maybe(1), Maybe(None), Maybe(2)])
-        Maybe(1)
-
-        >>> Maybe.msum([Maybe(None), Maybe(None), Maybe(2)])
-        Maybe(2)
-
-        >>> Maybe.msum([Maybe(None), Maybe(None), Maybe(None)])
-        Maybe(None)
-
+        Just(2)
         """
         if self.is_just:
             return self
         else:
             return y
 
-Maybe.mzero = Maybe(None)
+Just = Maybe
+Nothing = Maybe(None)
+
+Maybe.mzero = Nothing
+
 
 if __name__ == '__main__':
     import pytest, sys
