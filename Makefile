@@ -1,13 +1,14 @@
-all: test documentation
-html:
+all: test
+
+deps:
+	python setup.py develop
+
+html: test doc-deps
 	cd docs; make html
 
-test:
-	py.test --doctest-modules fp/ fp/tests.py
-	@make doctest
 
-doctest: doc-deps
-	@make -C docs/ doctest
+test: deps
+	py.test --doctest-modules fp/ fp/tests.py
 
 doc-deps:
 	pip install sphinx
