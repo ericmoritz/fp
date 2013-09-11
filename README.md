@@ -13,3 +13,4 @@ programming inspired tools to Python.
    bundled with functional languages
  * Provide a common interface to existing tools that makes using
    partials with higher-order functions more natural
+ * Provide a collection of Monads that are helpful for Python development
