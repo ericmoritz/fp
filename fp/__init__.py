@@ -9,9 +9,10 @@ import six
 
 if six.PY3:
     izip_longest = itertools.zip_longest
+    ifilter      = filter
 else:
     izip_longest = itertools.izip_longest
-
+    ifilter      = itertools.ifilter
 
 ####
 # atoms
@@ -47,7 +48,7 @@ This is useful for converting mapping functions whose first argument
 is the subject of mapper.
 
     >>> from fp import pp
-    >>> map(pp(str.lstrip, '/'), ['/foo', '/bar'])
+    >>> list(map(pp(str.lstrip, '/'), ['/foo', '/bar']))
     ['foo', 'bar']
 
 This is the equivalence to these expressions
@@ -55,7 +56,7 @@ This is the equivalence to these expressions
     >>> [item.lstrip("/") for item in ['/foo', '/bar']]
     ['foo', 'bar']
 
-    >>> map(lambda x: x.lstrip('/'), ['/foo', '/bar'])
+    >>> list(map(lambda x: x.lstrip('/'), ['/foo', '/bar']))
     ['foo', 'bar']
 
     """
@@ -75,10 +76,10 @@ Returns a new function which is the equivalent to
 Example:
 
     >>> from fp import pp, c, getitem
-    >>> map(
+    >>> list(map(
     ...  c(str.lower, pp(getitem, "word")),
     ...  [{"word": "Xray"}, {"word": "Young"}]
-    ... )
+    ... ))
     ['xray', 'young']
 
     """
@@ -127,6 +128,7 @@ These mutation function normally make use with higher-order function
 difficult.
 
     >>> from fp import callreturn
+    >>> from six.moves import reduce
     >>> reduce(
     ...    callreturn(set.add),
     ...    ["a", "b", "c"],
@@ -156,26 +158,26 @@ Useful for map functions.
     ...        coalesce([first, last])
     ...     )
     ...
-    >>> map(
+    >>> list(map(
     ...    kwfunc(full_name),
     ...    [
     ...        {"first": "Eric", "last": "Moritz"},
     ...        {"first": "John"},
     ...        {"last": "Cane"},
     ...    ]
-    ... ) == ["Eric Moritz", "John", "Cane"]
+    ... )) == ["Eric Moritz", "John", "Cane"]
     True
 
 Optionally, needed keys can be passed in:
 
 
-    >>> map(
+    >>> list(map(
     ...    kwfunc(full_name, ["first", "last"]),
     ...    [
     ...        {"first": "Eric", "last": "Moritz"},
     ...        {"first": "Gina", "dob": "1981-08-13"},
     ...    ]
-    ... ) == ["Eric Moritz", "Gina"]
+    ... )) == ["Eric Moritz", "Gina"]
     True
 
 """
@@ -353,7 +355,7 @@ def itake(n, iterable):
 Takes n items off the iterable:
 
     >>> from fp import itake
-    >>> list(itake(3, xrange(5)))
+    >>> list(itake(3, range(5)))
     [0, 1, 2]
 
     >>> list(itake(3, []))
@@ -368,7 +370,7 @@ def idrop(n, iterable):
 Drops the first `n` items off the iterator
 
     >>> from fp import idrop
-    >>> list(idrop(3, xrange(6)))
+    >>> list(idrop(3, range(6)))
     [3, 4, 5]
 
     >>> list(idrop(3, []))
@@ -385,7 +387,7 @@ yields two iterators split at index `i`
     >>> from fp import isplitat
     >>> def materalize(chunks):
     ...    "Turns a iterator of iterators into a list of lists"
-    ...    return map(list, chunks)
+    ...    return list(map(list, chunks))
     >>> materalize(
     ...     isplitat(3, range(6))
     ... )
@@ -419,7 +421,7 @@ def ichunk(size, iterable, fillvalue=undefined):
 
 
 def coalesce(items):
-    return itertools.ifilter(
+    return ifilter(
         lambda x: x is not None,
         items)
 

@@ -30,7 +30,7 @@ class Monad(object):
         def reducer(ms, m):
             return m.bind(lambda x: ms.bind(
                           lambda xs: cls(f(xs, x))))
-        return reduce(
+        return moves.reduce(
             reducer,
             items,
             initial)
@@ -54,7 +54,7 @@ class Monad(object):
 
     @classmethod
     def sequence_(cls, ms):
-        return reduce(cls.bind_, ms, cls(noop))
+        return moves.reduce(cls.bind_, ms, cls(noop))
         
     @classmethod
     def sequence_dict(cls, d):
@@ -138,7 +138,7 @@ class MonadPlus(object):
 
     @classmethod
     def msum(cls, xs):
-        return reduce(
+        return moves.reduce(
             cls.mplus,
             xs,
             cls.mzero)

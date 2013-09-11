@@ -116,8 +116,8 @@ class Maybe(Monad, MonadIter, MonadPlus):
     >>> Maybe.sequence([Just(1), Just(2)])
     Just([1, 2])
 
-    >>> Maybe.sequence_dict({"foo": Just(1), "bar": Just(2)})
-    Just({'foo': 1, 'bar': 2})
+    >>> Maybe.sequence_dict({"foo": Just(1), "bar": Just(2)}) == Just({'foo': 1, 'bar': 2})
+    True
 
     >>> maybe_int = Maybe.error_to_nothing(int)
     >>> Maybe.mapM(maybe_int, ["1", "2"])
