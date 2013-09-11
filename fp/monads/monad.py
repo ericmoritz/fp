@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod
 from fp import atom, p, identity
 from six import moves
+import six
 from collections import namedtuple
 
 # atoms
@@ -22,21 +23,57 @@ class Monad(object):
         return self.bind(lambda _: f())
 
     @classmethod
-    def sequence(cls, monad_list):
+    def reduce_sequence(cls, f, items, initial):
         """
+        folds a list of monads over f starting with an initial monad
         """
-        ret = []
-        for monad in monad_list:
-            monad.bind(lambda x: ret.append(x))
+        def reducer(ms, m):
+            return m.bind(lambda x: ms.bind(
+                          lambda xs: cls(f(xs, x))))
+        return reduce(
+            reducer,
+            items,
+            initial)
+        
+        
+    @classmethod
+    def sequence(cls, ms):
+        """
+        execute the monadic actions in ms, returning the result
+        """
+        ret = cls([])
+        def append_and_return(xs, x):
+            xs.append(x)
+            return xs
+
+        for m in ms:
+            ret = ret.bind(
+                lambda xs: m.bind(
+                lambda x: cls(append_and_return(xs, x))))
         return ret
 
     @classmethod
-    def sequence_(cls, monad_list):
+    def sequence_(cls, ms):
+        return reduce(cls.bind_, ms, cls(noop))
+        
+    @classmethod
+    def sequence_dict(cls, d):
         """
+        Perform all the actions inside a dictionary and return the result
         """
-        for monad in monad_list:
-            monad.bind(lambda x: cls(noop))
-        return cls(noop)
+        ret = cls({})
+        def store_and_return(d, k, v):
+            d[k] = v
+            return d
+
+        for k, m in six.iteritems(d):
+            ret = ret.bind(
+                lambda d: m.bind(
+                lambda v: cls(store_and_return(d, k, v))))
+        return ret
+
+    def sequence_dict_(cls, d):
+        return cls.sequence_(six.itervalues(d))
 
     @classmethod
     def mapM(cls, arrow, items):
@@ -57,45 +94,20 @@ class Monad(object):
         return cls.arrow_cl(arrow2, arrow1)
 
     @classmethod
-    def liftM(cls, f, *monads):
+    def ap(cls, f, *monads, **kwarg_monads):
         """
-        Lift a non-monadic function into the monad. 
-
-        >>> from fp import even
-        >>> from fp.monads.maybe import Maybe
-        >>> Maybe.liftM(even, Maybe(1))
-        Maybe(False)
-
-        >>> Maybe.liftM(even, Maybe(2))
-        Maybe(True)
+        apply a non-monadic function to the monads provided as arguments
         """
-        pass
-    
-    def _liftM2(cls, f):
-        def inner(m1, m2):
-            return m1.bind(lambda x: 
-                   m2.bind(lambda y:
-                   f(x, y)))
-        return inner
-
-    @classmethod
-    def _ap(cls, f):
-        """
-        """
-        return p(cls.liftM2, identity)
-    
-    
+        argsM = cls.sequence(monads)
+        kwargsM = cls.sequence_dict(kwarg_monads)
+        
+        return argsM.bind(
+            lambda args: kwargsM.bind(
+            lambda kwargs: cls(f(*args, **kwargs))))
+            
 
     @classmethod
     def filterM(cls, predM, items):
-        """
-        >>> from fp.monads.maybe import Maybe
-        >>> from fp import even, c
-        >>> maybeInt = Maybe.error_to_nothing(int) # convert int to a Maybe arrow
-        >>> maybeEven = Maybe.liftM(even) # lift even into Maybe
-        >>> Maybe.filterM(c(maybeEven, maybeInt), ["x","1","2","3","4"])
-        Maybe(['2', '4'])
-        """
         ret = []
             
         for x in items:
