@@ -1,5 +1,5 @@
 """
-Provides a number of operator and higher-order functions for FP fun
+A collection of functional programming inspired tools for Python.
 """
 import sys
 import operator
@@ -9,19 +9,83 @@ import six
 
 if six.PY3:
     izip_longest = itertools.zip_longest
+    ifilter      = filter
 else:
     izip_longest = itertools.izip_longest
-
+    ifilter      = itertools.ifilter
 
 ####
 # atoms
 ####
-undefined = object()
+class atom(object):
+    def __init__(self, name):
+        self.name = name
+
+    def __repr__(self):
+        return self.name
+
+undefined = atom("undefined")
+
+###
+# Higher-Order functions
+###
 
 
-####
-## Operators
-####
+from functools import partial as p
+
+def pp(func, *args0, **kwargs0):
+    """
+..function::pp(func : callable[, *args][, **keywords]) -> partial callable
+
+Returns an prepended partial function which when called will behave
+like `func` called with the positional arguments `args` and `keywords`
+
+If more arguments are supplied to the call, they are prepended to
+args. If additional keyword arguments are supplied, they extend and
+override keywords.
+
+This is useful for converting mapping functions whose first argument
+is the subject of mapper.
+
+    >>> from fp import pp
+    >>> list(map(pp(str.lstrip, '/'), ['/foo', '/bar']))
+    ['foo', 'bar']
+
+This is the equivalence to these expressions
+
+    >>> [item.lstrip("/") for item in ['/foo', '/bar']]
+    ['foo', 'bar']
+
+    >>> list(map(lambda x: x.lstrip('/'), ['/foo', '/bar']))
+    ['foo', 'bar']
+
+    """
+
+    def inner(*args1, **kwargs1):
+        args = args1 + args0
+        kwargs = dict(kwargs0, **kwargs1)
+        return func(*args, **kwargs)
+    return inner
+
+
+def c(f, g):
+    """..function::c(f : callable, g : callable) -> callable
+Returns a new function which is the equivalent to
+`f(g(*args, **kwargs))``
+
+Example:
+
+    >>> from fp import pp, c, getitem
+    >>> list(map(
+    ...  c(str.lower, pp(getitem, "word")),
+    ...  [{"word": "Xray"}, {"word": "Young"}]
+    ... ))
+    ['xray', 'young']
+
+    """
+    return lambda x: f(g(x))
+
+
 def case(*rules):
     # If the args has a length of one, args[0] is an iterator
     if len(rules) == 1:
@@ -37,103 +101,41 @@ def case(*rules):
     return inner
 
 
-def getitem(obj, *args, **kwargs):
-    default = kwargs.pop("default", None)
+def constantly(x):
+    """
+..function::constantly(x) -> callable
 
-    try:
-        return operator.getitem(obj, *args, **kwargs)
-    except (KeyError, IndexError):
-        return default
+Returns a function which always returns `x`
+regardless of arguments
 
-
-def setitem(obj, *args, **kwargs):
-    inner = callreturn(operator.setitem)
-    return inner(obj, *args, **kwargs)
-
-
-def delitem(obj, *args, **kwargs):
-    try:
-        operator.delitem(obj, *args, **kwargs)
-    except KeyError:
-        pass
-    return obj
-
-
-def dictupdate(dct, kv_iterable):
-    inner = callreturn(dict.update)
-    return inner(dct, kv_iterable)
-
-
-###
-# Partials
-###
-
-from functools import partial as p
-
-
-def ap(f, *args0, **kwargs0):
-    """Appended partial, args is called with ap() are append to the
-arguments passed to the partial
-
-    strip_leading_slash = ap(str.lstrip, "/")
-    assert strip_leading_slash("/foo") == str.lstrip("/foo", "/")
+    >>> from fp import constantly
+    >>> constantly('foo')(1, 2, foo='bar')
+    'foo'
 """
 
-    def inner(*args1, **kwargs1):
-        args = args1 + args0
-        kwargs = dict(kwargs0, **kwargs1)
-        return f(*args, **kwargs)
-    return inner
-
-
-def c(f, g):
-    return lambda x: f(g(x))
-
-
-def t(fs):
-    """Creates a threaded function call
-
-    Where compose is right associative
-
-    >>> c(p(mul, 2), p(add, 3))(2)
-    10
-
-    The thread partial is left associative
-
-    >>> t([p(add, 3), p(mul, 2)])(2)
-    10
-
-    """
-    head = first(fs)
-    tail = irest(fs)
-
-    return moves.reduce(
-        lambda composed, f: c(f, composed),
-        tail, head)
-
-
-def const(x):
     return lambda *args, **kwargs: x
 
 
-def flip(f):
-    return lambda x, y: f(y, x)
-
-
-def identity(x):
-    return x
-
-
 def callreturn(func):
-    """create a function which takes an object with args and kwargs,
-applys func(object, *args, **kwargs) and return object
+    """..function::callreturn(func : callable) -> callable
 
-Useful for non-pure functions which return None instead of the object.
+create a function which applies `func(object, *args, **kwargs)` and
+returns object
 
-These functions makes compositions difficult.
+Useful for mutation functions which return None instead of the object.
 
-    dictupdate = callreturn(dict.update)
-    assert {"foo": "bar"} = dictupdate({}, [("foo", "bar")])
+These mutation function normally make use with higher-order function
+difficult.
+
+    >>> from fp import callreturn
+    >>> from six.moves import reduce
+    >>> reduce(
+    ...    callreturn(set.add),
+    ...    ["a", "b", "c"],
+    ...    set()
+    ... ) == set(["a", "b", "c"])
+    True
+
     """
 
     def inner(obj, *args, **kwargs):
@@ -142,10 +144,47 @@ These functions makes compositions difficult.
     return inner
 
 
-def kwfunc(func, *keys):
+def kwfunc(func, keys=None):
+    """
+..function::kwfunc(func[, keys=None : None | list]) -> callable
+
+Returns a function which applies a dict as kwargs.
+
+Useful for map functions.
+
+    >>> from fp import coalesce, kwfunc
+    >>> def full_name(first=None, last=None):
+    ...     return " ".join(
+    ...        coalesce([first, last])
+    ...     )
+    ...
+    >>> list(map(
+    ...    kwfunc(full_name),
+    ...    [
+    ...        {"first": "Eric", "last": "Moritz"},
+    ...        {"first": "John"},
+    ...        {"last": "Cane"},
+    ...    ]
+    ... )) == ["Eric Moritz", "John", "Cane"]
+    True
+
+Optionally, needed keys can be passed in:
+
+
+    >>> list(map(
+    ...    kwfunc(full_name, ["first", "last"]),
+    ...    [
+    ...        {"first": "Eric", "last": "Moritz"},
+    ...        {"first": "Gina", "dob": "1981-08-13"},
+    ...    ]
+    ... )) == ["Eric Moritz", "Gina"]
+    True
+
+"""
+
     if keys:
         def inner(dct):
-            kwargs = dict(((k, dct[k]) for k in keys))
+            kwargs = dict(((k,dct[k]) for k in keys if k in dct))
             return func(**kwargs)
     else:
         def inner(dct):
@@ -154,23 +193,41 @@ def kwfunc(func, *keys):
     return inner
 
 
-def getter(*args, **kwargs):
-    """Creates a function that digs into a nested data structure or returns
-default if any of the keys are missing
-
-    >>> addresses = [{"address": {"city": "Reston"}},
-    ...              {"address": {"city": "Herndon"}},
-    ...              {"address": {}}]
-    >>>
-    >>> get_city = getter("address", "city")
-    >>> get_cities = p(imap, get_city)
-    >>> list(get_cities(addresses))
-    ["Reston", "Herndon", None]
+def getter(*args):
     """
-    default = kwargs.pop("default", None)
+..function::getter(*keys) ->  callable(object[, default=None])
+Creates a function that digs into a nested data structure or returns
+default if any of the keys are missing or the key references an
+object without __getitem__ (list, dict, etc)
 
-    def inner(obj):
+    >>> from fp import getter
+    >>> get_city = getter("cities", 0, "name")
+    >>> get_city(
+    ...    {
+    ...      "cities": [{"name": 'Reston'}]
+    ...    }
+    ... )
+    'Reston'
+    >>> get_city(
+    ...    {
+    ...      "cities": [{}]
+    ...    }
+    ... ) is None
+    True
+    >>> get_city(
+    ...    {
+    ...      "cities": [{}]
+    ...    },
+    ...    default="not found"
+    ... ) is "not found"
+    True
+    """
+    def inner(obj, default=None):
         for arg in args:
+            # If we hit a non-container object, return default
+            if not hasattr(obj, "__getitem__"):
+                return default
+
             obj = getitem(obj, arg, default=undefined)
             if obj is undefined:
                 return default
@@ -179,46 +236,164 @@ default if any of the keys are missing
     return inner
 
 
+####
+## Operators
+####
+
+
+def getitem(obj, key, default=None):
+    """..function::getitem(obj, key[, default=None]) -> value
+
+Returns the value indexed at "key" or returns `default`
+
+This differs from `operator.getitem` in that it never returns a
+KeyError or IndexError, which could be problematic when used with
+map() or other higher-ordered functions.
+
+    >>> getitem({"foo": "bar"}, "foo")
+    'bar'
+
+    >>> getitem({"foo": "bar"}, "baz") is None
+    True
+
+    >>> getitem({"foo": "bar"}, "baz", default="not-here")
+    'not-here'
+
+    >>> getitem([1], 0)
+    1
+
+    >>> getitem([1], 1) is None
+    True
+
+    >>> getitem([1], 1, default="not-here")
+    'not-here'
+
+    """
+    try:
+        return operator.getitem(obj, key)
+    except (KeyError, IndexError):
+        return default
+
+
+def setitem(obj, key, value):
+    """..function::setitem(obj, key, value) -> obj
+
+Sets the `key` to `value` and returns the mutated object
+
+    >>> from fp import setitem
+    >>> setitem({}, "foo", "bar")
+    {'foo': 'bar'}
+
+Unlike functional languages, the returned object is not a copy of the
+inputted object:
+
+    >>> data = {}
+    >>> setitem(data, "foo", "bar") is data
+    True
+
+This differs from `operator.setitem` in that it returns the mutated
+object rather than None.  This helps when mutating a lis
+
+    """
+
+    inner = callreturn(operator.setitem)
+    return inner(obj, key, value)
+
+
+def delitem(obj, key):
+    """
+..function::delitem(obj, key) -> obj
+
+Deletes the key from the `obj` and returns `obj`
+
+Unlike `del obj[key]`, this function silently suppresses
+the KeyError when a key does not exist. If you need that functionality
+use `operator.delitem`
+
+Example:
+
+    >>> from fp import delitem
+    >>> delitem({"foo": "bar"}, "foo")
+    {}
+
+    >>> delitem({"foo": "bar"}, "baz")
+    {'foo': 'bar'}
+
+Just like setitem, the returned object is the same object:
+
+    >>> data = {"foo": "bar"}
+    >>> delitem(data, "foo") is data
+    True
+"""
+
+    try:
+        operator.delitem(obj, key)
+    except KeyError:
+        pass
+    return obj
+
+
+def identity(x):
+    """..function::identity(x) -> x
+
+A function that returns what is passed to it.
+
+    >>> from fp import identity
+    >>> identity(1)
+    1
+    """
+    return x
+
+
 ###
-## generators
+## iterators
 ###
-
-
-def islice(*args):
-    arg_len = len(args)
-    start, stop, step = None, None, None
-
-    if arg_len == 2:
-        start, iterable = args
-    elif arg_len == 3:
-        start, stop, iterable = args
-    elif arg_len == 4:
-        start, stop, step, iterable = args
-    else:
-        raise TypeError(
-            ("islice() takes at between 2 and 4 arguments"
-             " %s given") % (arg_len)
-        )
-    return itertools.islice(iterable, start, stop, step)
 
 
 def itake(n, iterable):
-    return islice(0, n, iterable)
+    """
+Takes n items off the iterable:
+
+    >>> from fp import itake
+    >>> list(itake(3, range(5)))
+    [0, 1, 2]
+
+    >>> list(itake(3, []))
+    []
+    """
+    return itertools.islice(iterable, 0, n)
 
 
 def idrop(n, iterable):
+    """..function::idrop(n, iterable)
+
+Drops the first `n` items off the iterator
+
+    >>> from fp import idrop
+    >>> list(idrop(3, range(6)))
+    [3, 4, 5]
+
+    >>> list(idrop(3, []))
+    []
+    """
     return itertools.islice(iterable, n, None)
 
 
-def first(iterable, *args):
-    return next(iter(iterable), *args)
-
-
-def irest(iterable):
-    return idrop(1, iterable)
-
-
 def isplitat(i, iterable):
+    """..function::isplitat(i, iterable)
+
+yields two iterators split at index `i`
+
+    >>> from fp import isplitat
+    >>> def materalize(chunks):
+    ...    "Turns a iterator of iterators into a list of lists"
+    ...    return list(map(list, chunks))
+    >>> materalize(
+    ...     isplitat(3, range(6))
+    ... )
+    [[0, 1, 2], [3, 4, 5]]
+    """
+
     iterator = iter(iterable)
     yield itake(i, iterator)
     yield iterator
@@ -243,6 +418,12 @@ def ichunk(size, iterable, fillvalue=undefined):
     else:
         args = [iter(iterable)] * size
         return izip_longest(fillvalue=fillvalue, *args)
+
+
+def coalesce(items):
+    return ifilter(
+        lambda x: x is not None,
+        items)
 
 
 ####

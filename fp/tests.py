@@ -1,4 +1,5 @@
 from unittest import TestCase as BaseTestCase
+import unittest
 from collections import Iterator
 import fp
 import operator as op
@@ -16,19 +17,20 @@ class TestCase(BaseTestCase):
 class TestCaseOp(TestCase):
     def test(self):
         import re
-        from fp import p, ap, c, case, identity
+        from fp import p, pp, c, case, identity
         from operator import concat
 
         add_domain = p(concat, "https://example.com/")
         make_secure = p(re.sub, r"^http://", r"https://")
 
         sanitize_url = case(
-            (ap(str.startswith, "http://"), make_secure),
+            (pp(str.startswith, "http://"), make_secure),
 
-            (ap(str.startswith, "/"), c(add_domain, ap(str.lstrip, "/"))),
+            (pp(str.startswith, "/"), c(add_domain, pp(str.lstrip, "/"))),
 
             (True, add_domain),
         )
+
         self.assertEqual(
             "https://example.com/",
             sanitize_url("http://example.com/"))
@@ -45,10 +47,10 @@ class TestCaseOp(TestCase):
         # describe a case function using a list of rules rather than
         # arguments
         rules = [
-            (ap(str.startswith, "http://"),
+            (pp(str.startswith, "http://"),
              make_secure),
-            (ap(str.startswith, "/"),
-             c(add_domain, ap(str.lstrip, "/"))),
+            (pp(str.startswith, "/"),
+             c(add_domain, pp(str.lstrip, "/"))),
             (True,
              add_domain),
         ]
@@ -69,56 +71,15 @@ class TestCaseOp(TestCase):
         )
 
     def test_unmatched(self):
-        from fp import ap, case, const
+        from fp import pp, case, constantly
         from operator import lt
         op = case([
-            (ap(lt, 0), const(True))
+            (pp(lt, 0), constantly(True))
         ])
 
         self.assertRaises(RuntimeError, op, 1)
 
 
-class TestGetItem(TestCase):
-    def test(self):
-        x = {"foo": 1}
-
-        self.assertEqual(
-            1,
-            fp.getitem(x, "foo")
-        )
-
-        self.assertEqual(
-            None,
-            fp.getitem(x, "bar")
-        )
-
-        self.assertEqual(
-            0,
-            fp.getitem(x, "bar", default=0)
-        )
-
-
-class TestSetItem(TestCase):
-    def test(self):
-        x = {}
-        self.assertEqual(
-            {"foo": 1},
-            fp.setitem(x, "foo", 1)
-        )
-
-
-class TestDelItem(TestCase):
-    def test(self):
-        x = {"foo": 1}
-        self.assertEqual(
-            {},
-            fp.delitem(x, "foo")
-        )
-
-        self.assertEqual(
-            {},
-            fp.delitem({}, "foo")
-        )
 ##
 # Partials
 ##
@@ -137,7 +98,7 @@ class TestPartialPrepend(TestCase):
         def example(a, b, op=op.sub):
             return op(a, b)
 
-        sub_two = fp.ap(example, 2)
+        sub_two = fp.pp(example, 2)
 
         self.assertEqual(4, sub_two(6))
         self.assertEqual(-2, sub_two(0))
@@ -165,43 +126,13 @@ class TestCompose(TestCase):
                          add_three_and_double2(2))
 
 
-class TestThread(TestCase):
+class TestConstantly(TestCase):
 
     def test(self):
-        from fp import t, p
-        from operator import mul, add
-
-        add_three_and_double1 = t([
-            lambda x: x + 3,
-            lambda x: x * 2])
-
-        add_three_and_double2 = t([p(add, 3),
-                                   p(mul, 2)])
-
-        self.assertEqual(10,
-                         add_three_and_double1(2))
-
-        self.assertEqual(10,
-                         add_three_and_double2(2))
-
-
-class TestConst(TestCase):
-
-    def test(self):
-        say_hi = fp.const("hi")
+        say_hi = fp.constantly("hi")
 
         self.assertEqual("hi",
                          say_hi(1, a=1))
-
-
-class TestFlip(TestCase):
-
-    def test(self):
-        def f(x, y):
-            return x, y
-
-        self.assertEqual((2, 1),
-                         fp.flip(f)(1, 2))
 
 
 class TestIdentity(TestCase):
@@ -214,43 +145,6 @@ class TestIdentity(TestCase):
 ####
 ## Generator functions
 ####
-
-
-class TestISlice(TestCase):
-
-    def test_badarglen(self):
-        self.assertRaises(TypeError, fp.islice)
-        self.assertRaises(TypeError, fp.islice, 1, 2, 3, 4, 5)
-
-    def test_start(self):
-        result = fp.islice(
-            1, moves.xrange(5)
-        )
-
-        self.assert_iterator(result)
-        self.assertEqual(
-            [1, 2, 3, 4],
-            list(result)
-        )
-
-    def test_start_stop(self):
-        result = fp.islice(
-            1, 3, moves.xrange(5)
-        )
-
-        self.assert_iterator(result)
-        self.assertEqual(
-            [1, 2],
-            list(result)
-        )
-
-    def test_start_stop_step(self):
-        result = fp.islice(
-            1, None, 2,
-            moves.xrange(10)
-        )
-
-        self.assert_iterator(result)
 
 
 class TestITake(TestCase):
@@ -272,31 +166,6 @@ class TestIDrop(TestCase):
         self.assertEqual(
             [3, 4, 5],
             list(fp.idrop(3, range(6))))
-
-
-class TestFirst(TestCase):
-    def test(self):
-        self.assertEqual(1,
-                         fp.first(moves.xrange(1, 10)))
-
-    def test_empty(self):
-        self.assertRaises(StopIteration, fp.first, [])
-
-    def test_default(self):
-        self.assertEqual(
-            "not-found",
-            fp.first([], "not-found")
-        )
-
-
-class TestIRest(TestCase):
-    def test(self):
-        rest = fp.irest(moves.xrange(1, 10))
-
-        self.assert_iterator(rest)
-
-        self.assertEqual([2, 3, 4, 5, 6, 7, 8, 9],
-                         list(rest))
 
 
 class TestISplitAt(TestCase):
@@ -403,27 +272,6 @@ class TestIChunk(TestCase):
 # Reducers
 ##
 
-class TestDictUpdate(TestCase):
-    def test(self):
-        start = {}
-        result = fp.dictupdate(
-            start,
-            [
-                ("key1", "val1"),
-                ("key2", "val2"),
-            ]
-        )
-
-        self.assertEqual(
-            {"key1": "val1",
-             "key2": "val2"},
-            result)
-
-        # mergedict updates in place, start is the same dict as result
-        self.assertTrue(start is result)
-
-# bookmark
-
 
 class TestAllMap(TestCase):
 
@@ -445,8 +293,6 @@ class TestAnyMap(TestCase):
 class TestGetter(TestCase):
 
     def test(self):
-        from fp import getitem, t, c
-
         get_city = fp.getter("addresses", 0, "city")
 
         self.assertEqual("Reston",
@@ -458,14 +304,35 @@ class TestGetter(TestCase):
         self.assertEqual(None,
                          get_city({"addresses": [{}]}))
 
+        self.assertEqual(
+            "not found",
+            get_city(
+                {"addresses": [{}]},
+                default="not found"
+            )
+        )
 
+    def test_nonconatiner(self):
+        get_city = fp.getter(
+            "addresses", 0, "city",
+         )
+
+        self.assertEqual(
+            "not found",
+            get_city(
+                {
+                    "addresses": [None]
+                },
+                default="not found"
+            )
+        )
 
 
 class TestKWUnary(TestCase):
     def test_simple(self):
         from fp import kwfunc
 
-        def func(a=None, b=None):
+        def func(a=0, b=0):
             return a + b
 
         mapper = kwfunc(func)
@@ -475,13 +342,13 @@ class TestKWUnary(TestCase):
             mapper({"a": 2, "b": 3})
         )
 
-    def test_restricted(self):
+    def test_keys(self):
         from fp import kwfunc
 
-        def func(a=None, b=None):
+        def func(a=0, b=0):
             return a + b
 
-        mapper = kwfunc(func, "a", "b")
+        mapper = kwfunc(func, ["a", "b"])
 
         # a naive call using func(**kwargs)
         # would raise an error but put a bound
@@ -489,6 +356,11 @@ class TestKWUnary(TestCase):
         self.assertEqual(
             5,
             mapper({"a": 2, "b": 3, "c": 4})
+        )
+
+        self.assertEqual(
+            2,
+            mapper({"a": 2})
         )
 
 ####
