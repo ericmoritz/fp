@@ -5,7 +5,109 @@ class Maybe(Monad, MonadIter, MonadPlus):
     """
     A Maybe monad.
 
-    Examples:
+    The Maybe monad is helpful when dealing with sequences of functions that could return None.
+
+    For instance, when fetching a key from a dictionary that may not be there:
+
+    >>> from fp.monads.maybe import *
+    >>> data = {"foo": {"bar": {"baz": "bing"}}}
+    >>> data['foo']['bong']['baz']
+    Traceback (most recent call last):
+        ...
+    KeyError: 'bong'
+
+    This is a very common problem when processing JSON. Often, with JSON, a missing key is the same as null
+    but in Python a missing key raises an error. 
+
+    `dict.get` is often the solution for missing keys but is
+    still not enough:
+
+    >>> data.get("foo").get("bong").get("baz")
+    Traceback (most recent call last):
+        ...
+    AttributeError: 'NoneType' object has no attribute 'get'
+
+    To final solution to this ends up being ugly:
+
+    >>> data.get("foo", {}).get("bong", {}).get("baz") is None
+    True
+
+    It is even more complex when dealing with mixed types; for instance if "bong" ends up bing
+    a string instead of a dict.
+
+    The :class:`Maybe` monad lets us express errors such as these as
+    either something or nothing.  This is much like :func:`dict.get`
+    returning None, but we can chain Maybe actions so that they fail
+    with :class:`Nothing`, if any of the functions in the chain
+    returns :class:`Nothing`.
+
+    Normally getitem will raise an error if the key or index is
+    invalid, :func:`Maybe.error_to_nothing` causes :class:`Nothing` to
+    be returned if any exception occurs.
+
+    >>> from operator import getitem
+    >>> lookup = Maybe.error_to_nothing(getitem)
+
+    >>> lookup({"foo": "bar"}, "foo")
+    Just('bar')
+
+    >>> lookup({"foo": "bar"}, "bong")
+    Nothing
+
+    Now lookup returns :class:`Just(x)` if the key is found or
+    :class:`Nothing` if the key is not found.
+
+    To extract the value out of the :class:`Just()` class, we can call
+    :class:`Maybe.default()`:
+
+    >>> lookup({'foo': 'bar'}, 'foo').default('')
+    'bar'
+
+    >>> lookup({'foo': 'bar'}, 'bong').default('')
+    ''
+
+    Other operations are:
+
+    >>> Just(1).is_just
+    True
+    
+    >>> Just(1).is_nothing
+    False
+
+    >>> Nothing.is_nothing
+    True
+
+    >>> Nothing.is_just
+    False
+    
+    To chain the lookups, we simply need to partially apply the lookup function:
+
+    >>> from fp import pp
+    >>> lookup(data, "foo").bind(pp(lookup, "bar")).bind(pp(lookup, "baz"))
+    Just('bing')
+
+    >>> lookup(data, "foo").bind(pp(lookup, "bong")).bind(pp(lookup, "baz"))
+    Nothing
+
+    The Maybe monad also supports abuse of list comprehensions for expressing Maybe actions:
+    >>> Maybe.from_iterable(
+    ... baz
+    ... for foo  in lookup(data, 'foo')
+    ... for bong in lookup(foo, 'bong')
+    ... for baz  in lookup(bong, 'baz')
+    ... )
+    Nothing
+
+    >>> Maybe.from_iterable(
+    ... baz
+    ... for foo  in lookup(data, 'foo')
+    ... for bar in lookup(foo, 'bar')
+    ... for baz  in lookup(bar, 'baz')
+    ... )
+    Just('bing')
+
+
+    More Examples:
 
     >>> from fp.monads.maybe import Just, Nothing, Maybe
     >>> Maybe.sequence([Just(1), Nothing, Just(2)])    
@@ -211,13 +313,13 @@ class Maybe(Monad, MonadIter, MonadPlus):
         """
         The Maybe's bind function
 
-        >>> Just(1).bind(lambda x: Maybe(x)).from_just
-        1
+        >>> Just(1).bind(lambda x: Maybe(x))
+        Just(1)
         
         >>> def crashy(x):
         ...     assert False, "bind will not call me"
-        >>> Nothing.bind(crashy).is_nothing
-        1
+        >>> Nothing.bind(crashy)
+        Nothing
         """
         if self.is_just:
             return f(self.__value)
@@ -284,12 +386,17 @@ class Maybe(Monad, MonadIter, MonadPlus):
     ##=====================================================================
     def mplus(self, y):
         """
-        An associative operation.  We're not 
-        >>> Maybe(1).mplus(Maybe.mzero)
+        An associative operation. 
+
+        >>> Just(1).mplus(Maybe.mzero)
         Just(1)
 
-        >>> Maybe.mzero.mplus(Maybe(2))
+        >>> Nothing.mplus(Maybe(2))
         Just(2)
+
+        >>> Just(1).mplus(Just(2))
+        Just(1)
+
         """
         if self.is_just:
             return self

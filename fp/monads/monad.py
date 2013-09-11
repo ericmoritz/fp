@@ -120,6 +120,12 @@ class Monad(object):
 
     
 class MonadPlus(object):
+    """
+    MonadPlus allows a Monad to define what a zero result is and a method for adding two MonadPlus
+    instances together.
+    """
+
+
     __metaclass__ = ABCMeta
 
     mzero = NotImplemented # MonadPlus sub-classes need to define mzero
@@ -168,7 +174,12 @@ class MonadPlus(object):
     def unless(self, b):
         return self.when(not b)
 
+
 class MonadIter(object):
+    """
+    Provides the functionality to abuse list comprehensions
+    """
+
     __metaclass__ = ABCMeta
 
     @abstractmethod

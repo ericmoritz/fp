@@ -1,4 +1,4 @@
-:mod:`fp.monads` --- A collection of functional programming inspired utilities
+:mod:`fp.monads` --- A collection of monads
 ================================================================================
 
 .. module:: fp.monads
@@ -13,5 +13,24 @@ your Python code.
 
 :mod:`fp.monads` provides an implementation of the :class:`Maybe` monad.
 
+
 .. autoclass:: fp.monads.maybe.Maybe
+    :members:
+
+**fp.monads.monad**
+
+Provides the base classes for implementeding Monads with :mod:`fp`.
+
+.. autoclass:: fp.monads.monad.Monad
+    :members:
+
+.. autoclass:: fp.monads.monad.MonadPlus
+    :members:
+
+    .. property:: mzero
+
+       Zero results
+
+.. autoclass:: fp.monads.monad.MonadIter
+    :members:
 
