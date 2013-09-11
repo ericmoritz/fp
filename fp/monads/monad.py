@@ -150,12 +150,6 @@ class MonadPlus(object):
     @classmethod
     def guard(cls, b):
         """
-        >>> from fp.monads.maybe import Maybe
-        >>> Maybe.guard(True)
-        Maybe(noop)
-
-        >>> Maybe.guard(False)
-        Maybe(None)
         """
         if b:
             return cls(noop)

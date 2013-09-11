@@ -7,6 +7,7 @@ class Maybe(Monad, MonadIter, MonadPlus):
 
     Examples:
 
+    >>> from fp.monads.maybe import Just, Nothing, Maybe
     >>> Maybe.sequence([Just(1), Nothing, Just(2)])    
     Nothing
 
@@ -72,6 +73,13 @@ class Maybe(Monad, MonadIter, MonadPlus):
     Just(2)
 
     >>> Maybe.msum([Nothing, Nothing, Nothing])
+    Nothing
+
+    >>> from fp.monads.maybe import Maybe
+    >>> Maybe.guard(True)
+    Just(noop)
+
+    >>> Maybe.guard(False)
     Nothing
 
     """

@@ -12,6 +12,7 @@ Contents:
    :maxdepth: 2
 
    fp
+   monads
 
 Indices and tables
 ==================
