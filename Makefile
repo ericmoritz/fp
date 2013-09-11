@@ -8,6 +8,7 @@ html: test doc-deps
 
 
 test: deps
+	pip install pytest
 	py.test --doctest-modules fp/ fp/tests.py
 
 doc-deps:

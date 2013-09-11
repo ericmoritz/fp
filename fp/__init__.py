@@ -131,7 +131,7 @@ difficult.
     ...    callreturn(set.add),
     ...    ["a", "b", "c"],
     ...    set()
-    ... ) == {"a", "b", "c"}
+    ... ) == set(["a", "b", "c"])
     True
 
     """
@@ -182,7 +182,7 @@ Optionally, needed keys can be passed in:
 
     if keys:
         def inner(dct):
-            kwargs = {k:dct[k] for k in keys if k in dct}
+            kwargs = dict(((k,dct[k]) for k in keys if k in dct))
             return func(**kwargs)
     else:
         def inner(dct):
