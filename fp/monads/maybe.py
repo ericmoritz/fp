@@ -46,7 +46,8 @@ class Maybe(Monad, MonadIter, MonadPlus):
     be returned if any exception occurs.
 
     >>> from operator import getitem
-    >>> lookup = Maybe.error_to_nothing(getitem)
+    >>> from fp import p
+    >>> lookup = p(Maybe.error_to_nothing, getitem)
 
     >>> lookup({"foo": "bar"}, "foo")
     Just('bar')
@@ -119,7 +120,8 @@ class Maybe(Monad, MonadIter, MonadPlus):
     >>> Maybe.sequence_dict({"foo": Just(1), "bar": Just(2)}) == Just({'foo': 1, 'bar': 2})
     True
 
-    >>> maybe_int = Maybe.error_to_nothing(int)
+    >>> from fp import p
+    >>> maybe_int = p(Maybe.error_to_nothing, int)
     >>> Maybe.mapM(maybe_int, ["1", "2"])
     Just([1, 2])
 
@@ -163,7 +165,7 @@ class Maybe(Monad, MonadIter, MonadPlus):
 
     >>> from fp.monads.maybe import Maybe
     >>> from fp import even, c, p
-    >>> maybeInt = Maybe.error_to_nothing(int) # convert int to a Maybe arrow
+    >>> maybeInt = p(Maybe.error_to_nothing, int) # convert int to a Maybe arrow
     >>> maybeEven = p(Maybe.ap, even) # lift even into Maybe
     >>> Maybe.filterM(c(maybeEven, maybeInt), ["x","1","2","3","4"])
     Just(['2', '4'])
@@ -294,17 +296,21 @@ class Maybe(Monad, MonadIter, MonadPlus):
                 yield maybe.__value
 
     @staticmethod
-    def error_to_nothing(f):
+    def error_to_nothing(f, *args, **kwargs):
         """
         Converts a function that raises an exception of any kind to
         Nothing.
+
+        >>> Maybe.error_to_nothing(lambda x, y: x / y, 1, 1)
+        Just(1)
+
+        >>> Maybe.error_to_nothing(lambda x, y: x / y, 1, 0)
+        Nothing
         """
-        def inner(*args, **kwargs):
-            try:
-                return Just(f(*args, **kwargs))
-            except:
-                return Nothing
-        return inner
+        try:
+            return Just(f(*args, **kwargs))
+        except:
+            return Nothing
     
     ##=====================================================================
     ## Monad methods
