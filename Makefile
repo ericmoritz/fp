@@ -8,8 +8,8 @@ html: test doc-deps
 
 
 test: deps
-	pip install pytest
-	py.test --doctest-modules fp/ fp/tests.py
+	pip install pytest pytest-cov
+	py.test --doctest-modules --cov fp fp/
 
 doc-deps:
 	pip install sphinx
