@@ -6,11 +6,7 @@ import operator
 import itertools
 from six import moves
 import six
-
-if six.PY3:
-    ifilter      = filter
-else:
-    ifilter      = itertools.ifilter
+from fp.missing_six import ifilter
 
 
 ####
