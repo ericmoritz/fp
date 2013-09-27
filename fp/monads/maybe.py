@@ -186,6 +186,13 @@ class Maybe(Monad, MonadIter, MonadPlus):
     >>> Maybe.guard(False)
     Nothing
 
+    >>> from fp import even
+    >>> Just(4).mfilter(even)
+    Just(4)
+
+    >>> Just(3).mfilter(even)
+    Nothing
+
     """
 
     ##=====================================================================
@@ -301,10 +308,10 @@ class Maybe(Monad, MonadIter, MonadPlus):
         Converts a function that raises an exception of any kind to
         Nothing.
 
-        >>> Maybe.error_to_nothing(lambda x, y: x / y, 1, 1)
-        Just(1)
+        >>> Maybe.error_to_nothing(lambda x, y: x / y, 1.0, 1.0)
+        Just(1.0)
 
-        >>> Maybe.error_to_nothing(lambda x, y: x / y, 1, 0)
+        >>> Maybe.error_to_nothing(lambda x, y: x / y, 1.0, 0)
         Nothing
         """
         try:
@@ -315,6 +322,10 @@ class Maybe(Monad, MonadIter, MonadPlus):
     ##=====================================================================
     ## Monad methods
     ##=====================================================================
+    @classmethod
+    def ret(cls, value):
+        return cls(value)
+    
     def bind(self, f):
         """
         The Maybe's bind function
@@ -331,6 +342,14 @@ class Maybe(Monad, MonadIter, MonadPlus):
             return f(self.__value)
         else:
             return self
+
+    @classmethod
+    def fail(cls, err):
+        """
+        >>> Maybe.fail("some error")
+        Nothing
+        """
+        return Nothing
 
     ##=====================================================================
     ## MonadIter methods
@@ -413,8 +432,3 @@ Just = Maybe
 Nothing = Maybe(None)
 
 Maybe.mzero = Nothing
-
-
-if __name__ == '__main__':
-    import pytest, sys
-    sys.exit(pytest.main(["--doctest-modules", __file__]))

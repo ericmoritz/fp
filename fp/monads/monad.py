@@ -1,3 +1,9 @@
+"""
+The module provides the base class for Monads in Python.
+
+Monads
+"""
+
 from abc import ABCMeta, abstractmethod
 from fp import atom, p, identity
 from six import moves
@@ -10,10 +16,25 @@ noop = atom("noop")
 class Monad(object):
     __metaclass__ = ABCMeta
 
+    @classmethod
+    @abstractmethod
+    def ret(cls, value):
+        """
+        The return function for the monad
+        """
+
+
     @abstractmethod
     def bind(self, f):
         """
         Pass the value of this monad into the action f
+        """
+
+    @classmethod
+    @abstractmethod
+    def fail(cls, error):
+        """
+        Return the failure case of the monad.
         """
 
     def bind_(self, f):
@@ -23,25 +44,11 @@ class Monad(object):
         return self.bind(lambda _: f())
 
     @classmethod
-    def reduce_sequence(cls, f, items, initial):
-        """
-        folds a list of monads over f starting with an initial monad
-        """
-        def reducer(ms, m):
-            return m.bind(lambda x: ms.bind(
-                          lambda xs: cls(f(xs, x))))
-        return moves.reduce(
-            reducer,
-            items,
-            initial)
-        
-        
-    @classmethod
     def sequence(cls, ms):
         """
         execute the monadic actions in ms, returning the result
         """
-        ret = cls([])
+        ret = cls.ret([])
         def append_and_return(xs, x):
             xs.append(x)
             return xs
@@ -49,19 +56,26 @@ class Monad(object):
         for m in ms:
             ret = ret.bind(
                 lambda xs: m.bind(
-                lambda x: cls(append_and_return(xs, x))))
+                lambda x: cls.ret(append_and_return(xs, x))))
         return ret
 
     @classmethod
     def sequence_(cls, ms):
-        return moves.reduce(cls.bind_, ms, cls(noop))
+        def reducer(acc, m):
+            return acc.bind_(lambda: m)
+        return moves.reduce(
+            reducer,
+            ms,
+            cls.ret(noop)
+        )
+
         
     @classmethod
     def sequence_dict(cls, d):
         """
         Perform all the actions inside a dictionary and return the result
         """
-        ret = cls({})
+        ret = cls.ret({})
         def store_and_return(d, k, v):
             d[k] = v
             return d
@@ -69,11 +83,8 @@ class Monad(object):
         for k, m in six.iteritems(d):
             ret = ret.bind(
                 lambda d: m.bind(
-                lambda v: cls(store_and_return(d, k, v))))
+                lambda v: cls.ret(store_and_return(d, k, v))))
         return ret
-
-    def sequence_dict_(cls, d):
-        return cls.sequence_(six.itervalues(d))
 
     @classmethod
     def mapM(cls, arrow, items):
@@ -103,7 +114,7 @@ class Monad(object):
         
         return argsM.bind(
             lambda args: kwargsM.bind(
-            lambda kwargs: cls(f(*args, **kwargs))))
+            lambda kwargs: cls.ret(f(*args, **kwargs))))
             
 
     @classmethod
@@ -116,7 +127,20 @@ class Monad(object):
                     ret.append(x)
             boolM = predM(x)
             boolM.bind(filterArrow)
-        return cls(ret)
+        return cls.ret(ret)
+
+
+    def when(self, b):
+        cls = self.__class__
+        noopM = cls.ret(noop)
+
+        if b:
+            return self.bind_(lambda: noopM)
+        else:
+            return noopM
+
+    def unless(self, b):
+        return self.when(not b)
 
     
 class MonadPlus(object):
@@ -147,7 +171,7 @@ class MonadPlus(object):
         cls = self.__class__
         def inner(x):
             if pred(x):
-                return cls(x)
+                return cls.ret(x)
             else:
                 return cls.mzero
 
@@ -158,21 +182,9 @@ class MonadPlus(object):
         """
         """
         if b:
-            return cls(noop)
+            return cls.ret(noop)
         else:
             return cls.mzero
-
-    def when(self, b):
-        cls = self.__class__
-        noopM = cls(noop)
-
-        if b:
-            self.bind_(lambda: noopM)
-        else:
-            return noopM
-
-    def unless(self, b):
-        return self.when(not b)
 
 
 class MonadIter(object):
@@ -185,14 +197,19 @@ class MonadIter(object):
     @abstractmethod
     def __iter__(self):
         """
+        Exposes the contained value as an iterable object
         """
 
     @classmethod
     @abstractmethod
     def from_iterable(cls, iterable):
         """
+        Converts an iterable into a Monad
         """
 
-if __name__ == '__main__':
-    import pytest, sys
-    sys.exit(pytest.main(["--doctest-modules", __file__]))
+    @classmethod
+    def do(cls, iterable):
+        """
+        An alias for from_iterable
+        """
+        return cls.from_iterable(iterable)
