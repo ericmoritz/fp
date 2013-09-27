@@ -197,10 +197,19 @@ class MonadIter(object):
     @abstractmethod
     def __iter__(self):
         """
+        Exposes the contained value as an iterable object
         """
 
     @classmethod
     @abstractmethod
     def from_iterable(cls, iterable):
         """
+        Converts an iterable into a Monad
         """
+
+    @classmethod
+    def do(cls, iterable):
+        """
+        An alias for from_iterable
+        """
+        return cls.from_iterable(iterable)

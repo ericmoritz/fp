@@ -24,6 +24,17 @@ Using bind:
 Hello
 World
 
+Abusing generator expressions:
+
+>>> action = IO.do(
+... None
+... for _ in printLn("Hello")
+... for _ in printLn("World")
+... )
+>>> action.run()
+Hello
+World
+
 >>> actions = [printLn("Hello"), printLn("World")]
 >>> IO.sequence_(actions).run()
 Hello
@@ -44,6 +55,8 @@ Hello
 
 >>> _ = printLn("Hello").unless(True).run()
 
+
+
 """
 
 from fp.monads.monad import Monad, MonadIter
@@ -61,7 +74,7 @@ def io(f):
     return inner
 
 
-class IO(Monad):
+class IO(Monad, MonadIter):
     """
     This is the IO monad.  Useful in composing IO code
 
@@ -95,3 +108,15 @@ class IO(Monad):
 
     def run(self):
         return self.__action()
+
+    @classmethod
+    def from_iterable(cls, iterable):
+        def action():
+            return next(iterable)
+
+        return IO(action)
+
+    def __iter__(self):
+        def gen():
+            yield self.__action()
+        return gen()
