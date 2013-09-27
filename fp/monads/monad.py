@@ -63,7 +63,7 @@ class Monad(object):
     def sequence_(cls, ms):
         def reducer(acc, m):
             return acc.bind_(lambda: m)
-        return reduce(
+        return moves.reduce(
             reducer,
             ms,
             cls.ret(noop)

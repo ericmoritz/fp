@@ -4,7 +4,7 @@ won easily) but it is implement for completeness.
 
 >>> @io
 ... def printLn(x):
-...     print x
+...     print(x)
 
 The IO action is returned when calling printLn but nothing
 is printed
