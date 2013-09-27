@@ -143,6 +143,46 @@ class Monad(object):
         return self.when(not b)
 
     
+
+    @classmethod
+    def catch(cls, f, *args, **kwargs):
+        """
+        Execute the function f(*args, **kwargs) and return the value inside the
+        monad.
+
+        Catch any errors and call the monad's fail method
+
+        >>> from fp.monads.maybe import Maybe
+        >>> from fp.monads.either import Either
+        >>> from fp.monads.iomonad import IO
+
+        >>> getter = {"foo": "bar"}.__getitem__
+        >>> Maybe.catch(getter, "foo")
+        Just('bar')
+
+        >>> Maybe.catch(getter, "baz")
+        Nothing
+
+        >>> Either.catch(getter, "foo")
+        Right('bar')
+
+        >>> Either.catch(getter, "baz")
+        Left(KeyError('baz',))
+
+        >>> IO.catch(getter, "foo").run()
+        'bar'
+        
+        >>> IO.catch(getter, "baz")
+        Traceback (most recent call last):
+            ...
+        KeyError: 'baz'
+        """
+        try:
+            return cls.ret(f(*args, **kwargs))
+        except Exception, e:
+            return cls.fail(e)
+
+
 class MonadPlus(object):
     """
     MonadPlus allows a Monad to define what a zero result is and a method for adding two MonadPlus
@@ -185,7 +225,6 @@ class MonadPlus(object):
             return cls.ret(noop)
         else:
             return cls.mzero
-
 
 class MonadIter(object):
     """
