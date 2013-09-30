@@ -1,9 +1,71 @@
 import fp
-from fp.monads.monad import Monad
+from fp.monads.monad import Monad, MonadIter
 from abc import ABCMeta, abstractmethod
 
 
 class Either(Monad):
+    """
+    An Either monad.
+
+    The Either monad is helpful when dealiyng with sequences of functions
+    that can fail.  These functions return Right(value) on success and Left(error) on
+    failure.
+
+    When chained together, these functions will short circuit the chain when a 
+    failure occurs.
+
+    >>> def lookup(d, k):
+    ...     try:
+    ...         return Right(d[k])
+    ...     except Exception as err:
+    ...         return Left(err)
+
+    >>> lookup({'foo': 'bar'}, 'foo')
+    Right('bar')
+    >>> lookup({}, 'foo')
+    Left(KeyError('foo',))
+
+    The benefit of Either's over Exceptions is that you're forced to handle the
+    error eventually.  You can't let the Exception bubble to the surface and crash your
+    program. Nothing escapes the monad!
+
+    The Either method lets you handle the error in your own way.
+
+    >>> lookup({}, 'foo').either(
+    ...     lambda err: err,
+    ...     lambda val: val
+    ... )
+    KeyError('foo',)
+
+    >>> lookup({'foo': 'bar'}, 'foo').either(
+    ...     lambda err: err,
+    ...     lambda val: val
+    ... )
+    'bar'
+    
+    The default method lets you completely ignore the error:
+
+    >>> lookup({'foo': 'bar'}, 'foo').default('bing')
+    'bar'
+
+    >>> lookup({}, 'foo').default('bing')
+    'bing'
+
+    Just like any other monad, functions can be chained together using bind(f):
+
+    >>> lookup({'foo': {'bar': 'baz'}}, 'foo').bind(
+    ... lambda foo: lookup(foo, 'bar'))
+    Right('baz')
+
+    >>> lookup({'foo': {}}, 'foo').bind(
+    ... lambda foo: lookup(foo, 'bar'))
+    Left(KeyError('bar',))
+
+    >>> lookup({}, 'foo').bind(
+    ... lambda foo: lookup(foo, 'bar'))
+    Left(KeyError('foo',))
+    
+    """
     __metaclass__ = ABCMeta
 
     @classmethod
@@ -37,7 +99,14 @@ class Either(Monad):
         """
         Execute the left_fun(err) on Left, right_fun(value) on Right
         """
+
+    @abstractmethod
+    def default(self, default):
+        """
+        Returns the value if right, default value if left.
+        """
         
+
     @abstractmethod
     def is_left(self):
         """
@@ -81,6 +150,9 @@ class Left(Either):
     def either(self, left_fun, _):
         return left_fun(self.__error)
 
+    def default(self, default):
+        return default
+
     def __repr__(self):
         return "Left({0!r})".format(self.__error)
 
@@ -107,6 +179,9 @@ class Right(Either):
     def either(self, _, right_fun):
         return right_fun(self.__value)
 
+    def default(self, _):
+        return self.__value 
+
     def __repr__(self):
         return "Right({0!r})".format(self.__value)
 
@@ -121,3 +196,4 @@ class Right(Either):
         True
         """
         return False
+
