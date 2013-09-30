@@ -145,7 +145,7 @@ class Monad(object):
     
 
     @classmethod
-    def catch(cls, f, *args, **kwargs):
+    def catch(cls, f):
         """
         Execute the function f(*args, **kwargs) and return the value inside the
         monad.
@@ -156,30 +156,29 @@ class Monad(object):
         >>> from fp.monads.either import Either
         >>> from fp.monads.iomonad import IO
 
-        >>> getter = {"foo": "bar"}.__getitem__
-        >>> Maybe.catch(getter, "foo")
+        >>> Maybe.catch(lambda: {'foo': 'bar'}['foo'])
         Just('bar')
 
-        >>> Maybe.catch(getter, "baz")
+        >>> Maybe.catch(lambda: {}['foo'])
         Nothing
 
-        >>> Either.catch(getter, "foo")
+        >>> Either.catch(lambda: {'foo': 'bar'}['foo'])
         Right('bar')
 
-        >>> Either.catch(getter, "baz")
-        Left(KeyError('baz',))
+        >>> Either.catch(lambda: {}['foo'])
+        Left(KeyError('foo',))
 
-        >>> IO.catch(getter, "foo").run()
+        >>> IO.catch(lambda: {'foo': 'bar'}['foo']).run()
         'bar'
-        
-        >>> IO.catch(getter, "baz")
+
+        >>> IO.catch(lambda: {}['foo']).run()
         Traceback (most recent call last):
             ...
-        KeyError: 'baz'
+        KeyError: 'foo'
         """
         try:
-            return cls.ret(f(*args, **kwargs))
-        except Exception, e:
+            return cls.ret(f())
+        except Exception as e:
             return cls.fail(e)
 
 
