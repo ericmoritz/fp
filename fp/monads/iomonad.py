@@ -117,6 +117,4 @@ class IO(Monad, MonadIter):
         return IO(action)
 
     def __iter__(self):
-        def gen():
-            yield self.__action()
-        return gen()
+        yield self.__action()
