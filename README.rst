@@ -2,7 +2,7 @@ This project aims to build a standard collection of functional
 programming inspired tools to Python.
 
 
-.. image: https://secure.travis-ci.org/ericmoritz/fp.png
+.. image:: https://secure.travis-ci.org/ericmoritz/fp.png
 
 **Goals**
 
