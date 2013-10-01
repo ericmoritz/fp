@@ -1,65 +1,7 @@
 """
-This module implements an IO monad.  Its usefulness in Python can be argued against (and
-won easily) but it is implement for completeness.
-
->>> @io
-... def printLn(x):
-...     print(x)
-
-The IO action is returned when calling printLn but nothing
-is printed
-
->>> action = printLn("hi")
->>> isinstance(action, IO)
-True
-
->>> action.run()
-hi
-
-Using bind:
-
->>> printLn("Hello").bind_(
-... lambda: printLn("World")
-... ).run()
-Hello
-World
-
-Abusing generator expressions:
-
->>> action = IO.do(
-... None
-... for _ in printLn("Hello")
-... for _ in printLn("World")
-... )
->>> action.run()
-Hello
-World
-
->>> actions = [printLn("Hello"), printLn("World")]
->>> IO.sequence_(actions).run()
-Hello
-World
-
->>> action = IO.mapM_(printLn, ["Hello", "World"])
->>> action.run()
-Hello
-World
-
->>> _ = printLn("Hello").when(True).run()
-Hello
-
->>> _ = printLn("Hello").when(False).run()
-
->>> _ = printLn("Hello").unless(False).run()
-Hello
-
->>> _ = printLn("Hello").unless(True).run()
-
-
-
 """
 
-from fp.monads.monad import Monad, MonadIter
+from fp.monads.monad import Monad
 from functools import wraps
 
 
@@ -74,9 +16,39 @@ def io(f):
     return inner
 
 
-class IO(Monad, MonadIter):
+@io
+def printLn(s):
+    print(s)
+
+
+class IO(Monad):
     """
     This is the IO monad.  Useful in composing IO code
+
+    This module implements an IO monad.  Its usefulness in Python can be
+    argued against (and won easily) but it is implement for completeness.
+
+    >>> @io
+    ... def printLn(x):
+    ...     print(x)
+
+    The IO action is returned when calling printLn but nothing
+    is printed
+
+    >>> action = printLn("hi")
+    >>> isinstance(action, IO)
+    True
+
+    >>> action.run()
+    hi
+
+    Using bind:
+
+    >>> printLn("Hello").bind_(
+    ... lambda: printLn("World")
+    ... ).run()
+    Hello
+    World
 
     """
     def __init__(self, action):
@@ -84,6 +56,16 @@ class IO(Monad, MonadIter):
 
     @classmethod
     def ret(cls, value):
+        """
+        Returns a value in the IO monad:
+
+        >>> action = IO.ret("Hello")
+
+        You can then use bind that to an arrow:
+
+        >>> action.bind(printLn).run()
+        Hello
+        """
         return IO(lambda: value)
 
     def bind(self, f):
@@ -92,7 +74,6 @@ class IO(Monad, MonadIter):
             ioM = f(x)
             return ioM.run()
         return IO(new_action)
-
 
     @classmethod
     def fail(cls, exception):
@@ -108,13 +89,3 @@ class IO(Monad, MonadIter):
 
     def run(self):
         return self.__action()
-
-    @classmethod
-    def from_iterable(cls, iterable):
-        def action():
-            return next(iterable)
-
-        return IO(action)
-
-    def __iter__(self):
-        yield self.__action()

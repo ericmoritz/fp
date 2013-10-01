@@ -9,7 +9,7 @@
 the :mod:`fp.monads` module provides a collection of monads to use with
 your Python code.  
 
-*fp.monads.maybe**
+**Maybe**
 
 :mod:`fp.monads` provides an implementation of the :class:`Maybe` monad.
 
@@ -17,9 +17,26 @@ your Python code.
 .. autoclass:: fp.monads.maybe.Maybe
     :members:
 
-**fp.monads.monad**
+**Either**
 
-Provides the base classes for implementeding Monads with :mod:`fp`.
+:mod:`fp.monads` provides an implementation of the :class:`Either` monad.
+
+
+.. autoclass:: fp.monads.either.Either
+    :members:
+
+
+**IO**
+
+:mod:`fp.monads` provides an implementation of the :class:`IO` monad. 
+
+.. autoclass:: fp.monads.iomonad.IO
+    :members:
+
+
+**Base Monad classes**
+
+Use the following classes for defining your own monads.
 
 .. autoclass:: fp.monads.monad.Monad
     :members:
@@ -30,7 +47,4 @@ Provides the base classes for implementeding Monads with :mod:`fp`.
     .. property:: mzero
 
        Zero results
-
-.. autoclass:: fp.monads.monad.MonadIter
-    :members:
 

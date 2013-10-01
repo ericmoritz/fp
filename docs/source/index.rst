@@ -6,13 +6,23 @@
 Welcome to fp's documentation!
 ==============================
 
-Contents:
+The fp package provides a toolkit of Functional Programming inspired tools.
+
+The base `fp` module provides a collection of simple utilities to suppliment `functools`
+and `itertools`.
+
+The `fp.monads` module provides a collection of monads such as Maybe and Either to
+help you build much more resiliant software.
+
+Finally the `fp.collections` module provides utilities for working with collections
+in a monadic way.
 
 .. toctree::
    :maxdepth: 2
 
    fp
    monads
+   collections
 
 Indices and tables
 ==================

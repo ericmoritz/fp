@@ -1,23 +1,26 @@
-from fp.monads.monad import Monad, MonadIter, MonadPlus
+from fp.monads.monad import Monad, MonadPlus
 
 
-class Maybe(Monad, MonadIter, MonadPlus):
+class Maybe(Monad, MonadPlus):
     """
     A Maybe monad.
 
-    The Maybe monad is helpful when dealing with sequences of functions that could return None.
+    The Maybe monad is helpful when dealing with sequences of
+    functions that could return None.
 
-    For instance, when fetching a key from a dictionary that may not be there:
+    For instance, when fetching a key from a dictionary that may not
+    be there:
 
-    >>> from fp.monads.maybe import *
+    >>> from fp.monads.maybe import Maybe, Just, Nothing
     >>> data = {"foo": {"bar": {"baz": "bing"}}}
     >>> data['foo']['bong']['baz']
     Traceback (most recent call last):
         ...
     KeyError: 'bong'
 
-    This is a very common problem when processing JSON. Often, with JSON, a missing key is the same as null
-    but in Python a missing key raises an error. 
+    This is a very common problem when processing JSON. Often, with
+    JSON, a missing key is the same as null but in Python a missing
+    key raises an error.
 
     `dict.get` is often the solution for missing keys but is
     still not enough:
@@ -32,8 +35,8 @@ class Maybe(Monad, MonadIter, MonadPlus):
     >>> data.get("foo", {}).get("bong", {}).get("baz") is None
     True
 
-    It is even more complex when dealing with mixed types; for instance if "bong" ends up bing
-    a string instead of a dict.
+    It is even more complex when dealing with mixed types; for
+    instance if "bong" ends up being a list instead of a dict.
 
     The :class:`Maybe` monad lets us express errors such as these as
     either something or nothing.  This is much like :func:`dict.get`
@@ -42,12 +45,12 @@ class Maybe(Monad, MonadIter, MonadPlus):
     returns :class:`Nothing`.
 
     Normally getitem will raise an error if the key or index is
-    invalid, :func:`Maybe.error_to_nothing` causes :class:`Nothing` to
+    invalid, :func:`Maybe.catch` causes :class:`Nothing` to
     be returned if any exception occurs.
 
     >>> from operator import getitem
     >>> from fp import p
-    >>> lookup = p(Maybe.error_to_nothing, getitem)
+    >>> lookup = p(Maybe.catch, getitem)
 
     >>> lookup({"foo": "bar"}, "foo")
     Just('bar')
@@ -67,21 +70,8 @@ class Maybe(Monad, MonadIter, MonadPlus):
     >>> lookup({'foo': 'bar'}, 'bong').default('')
     ''
 
-    Other operations are:
-
-    >>> Just(1).is_just
-    True
-    
-    >>> Just(1).is_nothing
-    False
-
-    >>> Nothing.is_nothing
-    True
-
-    >>> Nothing.is_just
-    False
-    
-    To chain the lookups, we simply need to partially apply the lookup function:
+    To chain the lookups, we simply need to partially apply the lookup
+    function:
 
     >>> from fp import pp
     >>> lookup(data, "foo").bind(pp(lookup, "bar")).bind(pp(lookup, "baz"))
@@ -90,109 +80,26 @@ class Maybe(Monad, MonadIter, MonadPlus):
     >>> lookup(data, "foo").bind(pp(lookup, "bong")).bind(pp(lookup, "baz"))
     Nothing
 
-    The Maybe monad also supports abuse of list comprehensions for expressing Maybe actions:
-    >>> Maybe.from_iterable(
-    ... baz
-    ... for foo  in lookup(data, 'foo')
-    ... for bong in lookup(foo, 'bong')
-    ... for baz  in lookup(bong, 'baz')
-    ... )
-    Nothing
+    This is still not as pretty as it could be so we provide a
+    `get_nested` function in the `fp.collections` module:
 
-    >>> Maybe.from_iterable(
-    ... baz
-    ... for foo  in lookup(data, 'foo')
-    ... for bar in lookup(foo, 'bar')
-    ... for baz  in lookup(bar, 'baz')
-    ... )
+    >>> from fp.collections import get_nested
+    >>> get_nested(Maybe, data, "foo", "bar", "baz")
     Just('bing')
 
-
-    More Examples:
-
-    >>> from fp.monads.maybe import Just, Nothing, Maybe
-    >>> Maybe.sequence([Just(1), Nothing, Just(2)])    
+    >>> get_nested(Maybe, data, "foo", "bong", "baz")
     Nothing
 
-    >>> Maybe.sequence([Just(1), Just(2)])
-    Just([1, 2])
+    In addition, functions that return None become Nothing automatically:
 
-    >>> Maybe.sequence_dict({"foo": Just(1), "bar": Just(2)}) == Just({'foo': 1, 'bar': 2})
-    True
-
-    >>> from fp import p
-    >>> maybe_int = p(Maybe.error_to_nothing, int)
-    >>> Maybe.mapM(maybe_int, ["1", "2"])
-    Just([1, 2])
-
-    >>> Maybe.mapM(maybe_int, ["1", "a"])
+    >>> Maybe.ret(None)
     Nothing
 
-
-
-    Left to Right arrow composition.  maybe cast the string as an int, then maybe add 1
-
-    >>> string_to_plus1 = Maybe.arrow_cl(maybe_int, lambda x: Maybe(x+1))
-    >>> string_to_plus1("1")
-    Just(2)
-
-
-    Right to Left arrow composition.  maybe cast the string as an int, then maybe add 1
-
-    >>> string_to_plus1 = Maybe.arrow_cr(lambda x: Maybe(x+1), maybe_int)
-    >>> string_to_plus1("1")
-    Just(2)
-
-    >>> Maybe.ap(lambda x: x+1, Just(1))
-    Just(2)
-
-    >>> Maybe.ap(lambda x: x+1, Nothing)
-    Nothing
-    
-    >>> import operator
-    >>> Maybe.ap(operator.add, Just(1), Just(2))
-    Just(3)
-
-    >>> Maybe.ap(operator.add, Nothing, Just(2))
+    >>> Maybe.ret({}.get('foo'))
     Nothing
 
-    >>> Maybe.ap(operator.add, Just(1), Nothing)
-    Nothing
-
-    >>> from datetime import timedelta
-    >>> Maybe.ap(timedelta, days=Just(1), seconds=Just(60))
-    Just(datetime.timedelta(1, 60))
-
-    >>> from fp.monads.maybe import Maybe
-    >>> from fp import even, c, p
-    >>> maybeInt = p(Maybe.error_to_nothing, int) # convert int to a Maybe arrow
-    >>> maybeEven = p(Maybe.ap, even) # lift even into Maybe
-    >>> Maybe.filterM(c(maybeEven, maybeInt), ["x","1","2","3","4"])
-    Just(['2', '4'])
-
-    >>> Maybe.msum([Maybe(1), Nothing, Maybe(2)])
-    Just(1)
-
-    >>> Maybe.msum([Nothing, Nothing, Maybe(2)])
-    Just(2)
-
-    >>> Maybe.msum([Nothing, Nothing, Nothing])
-    Nothing
-
-    >>> from fp.monads.maybe import Maybe
-    >>> Maybe.guard(True)
-    Just(noop)
-
-    >>> Maybe.guard(False)
-    Nothing
-
-    >>> from fp import even
-    >>> Just(4).mfilter(even)
-    Just(4)
-
-    >>> Just(3).mfilter(even)
-    Nothing
-
+    This feature allows you to easily integrate the Maybe monad with
+    existing functions that return None.
     """
 
     ##=====================================================================
@@ -222,12 +129,12 @@ class Maybe(Monad, MonadIter, MonadPlus):
         False
         """
         return self.__value is not None
-    
+
     @property
     def is_nothing(self):
         """
         Tests if the Maybe is Nothing
-        
+
         >>> Nothing.is_nothing
         True
 
@@ -274,7 +181,7 @@ class Maybe(Monad, MonadIter, MonadPlus):
     def cat_maybes(cls, maybes):
         """
         Returns an iterator of the Just values
-        
+
         >>> list(Maybe.cat_maybes([
         ...     Just(1), Nothing, Just(2)
         ... ]))
@@ -302,37 +209,20 @@ class Maybe(Monad, MonadIter, MonadPlus):
             if maybe.is_just:
                 yield maybe.__value
 
-    @staticmethod
-    def error_to_nothing(f, *args, **kwargs):
-        """
-        Converts a function that raises an exception of any kind to
-        Nothing.
-
-        >>> Maybe.error_to_nothing(lambda x, y: x / y, 1.0, 1.0)
-        Just(1.0)
-
-        >>> Maybe.error_to_nothing(lambda x, y: x / y, 1.0, 0)
-        Nothing
-        """
-        try:
-            return Just(f(*args, **kwargs))
-        except:
-            return Nothing
-    
     ##=====================================================================
     ## Monad methods
     ##=====================================================================
     @classmethod
     def ret(cls, value):
         return cls(value)
-    
+
     def bind(self, f):
         """
-        The Maybe's bind function
+        The Maybe's bind function.  `f` is called only if `self` is a Just.
 
         >>> Just(1).bind(lambda x: Maybe(x))
         Just(1)
-        
+
         >>> def crashy(x):
         ...     assert False, "bind will not call me"
         >>> Nothing.bind(crashy)
@@ -352,66 +242,11 @@ class Maybe(Monad, MonadIter, MonadPlus):
         return Nothing
 
     ##=====================================================================
-    ## MonadIter methods
-    ##=====================================================================
-    def __iter__(self):
-        """
-        The MonadIter.__iter__ function to enable monadic exploitation
-        of list generators:
-
-        >>> list(Just(1))
-        [1]
-
-        >>> list(Nothing)
-        []
-
-        >>> def lookup(d, x):
-        ...     return Maybe(d.get(x))
-        >>> data = {"foo": {"bar": "baz"}}
-
-        
-        >>> Maybe.from_iterable(
-        ...    val
-        ...    for inner in lookup(data, "foo")
-        ...    for val   in lookup(inner, "bar")
-        ... )
-        Just('baz')
-
-        Failure on the first key:
-
-        >>> Maybe.from_iterable(
-        ...    val
-        ...    for inner in lookup(data, "fud")
-        ...    for val   in lookup(inner, "baz")
-        ... )
-        Nothing
-
-        Failure on the second key:
-
-        >>> Maybe.from_iterable(
-        ...    val
-        ...    for inner in lookup(data, "foo")
-        ...    for val   in lookup(inner, "bong")
-        ... )
-        Nothing
-        """
-        if self.is_just:
-            return iter([self.__value])
-        else:
-            return iter([])
-
-    @classmethod
-    def from_iterable(cls, iterable):
-        for x in iterable:
-            return Maybe(x)
-        return Nothing
-
-    ##=====================================================================
     ## MonadPlus methods
     ##=====================================================================
     def mplus(self, y):
         """
-        An associative operation. 
+        An associative operation.
 
         >>> Just(1).mplus(Maybe.mzero)
         Just(1)

@@ -1,11 +1,9 @@
 """
 A collection of functional programming inspired tools for Python.
 """
-import sys
 import operator
 import itertools
 from six import moves
-import six
 from fp.missing_six import ifilter
 
 
@@ -17,6 +15,10 @@ class atom(object):
         self.name = name
 
     def __repr__(self):
+        """
+        >>> atom("test")
+        test
+        """
         return self.name
 
 undefined = atom("undefined")
@@ -27,6 +29,7 @@ undefined = atom("undefined")
 
 
 from functools import partial as p
+
 
 def pp(func, *args0, **kwargs0):
     """
@@ -94,7 +97,8 @@ regardless of arguments
 
 
 def callreturn(method, obj, *args, **kwargs):
-    """..function::callreturn(method : callable, obj : a, *args, **kwargs) ->  a
+    """
+..function::callreturn(method : callable, obj : a, *args, **kwargs) ->  a
 
 Calls the method
 
@@ -151,7 +155,7 @@ Optionally, needed keys can be passed in:
 
     if keys:
         def inner(dct):
-            kwargs = dict(((k,dct[k]) for k in keys if k in dct))
+            kwargs = dict(((k, dct[k]) for k in keys if k in dct))
             return func(**kwargs)
     else:
         def inner(dct):
@@ -171,7 +175,7 @@ def trampoline(f):
     ...     return trampoline(counter_(0, 2000))
 
     >>> def counter_(acc, n):
-    ...     if n == 0: 
+    ...     if n == 0:
     ...         return acc
     ...     else:
     ...         return lambda: counter_(acc+1, n-1)
@@ -311,7 +315,7 @@ def anymap(f, iterable):
 def even(x):
     """
     True if x is even
-    
+
     >>> even(1)
     False
 
@@ -325,7 +329,7 @@ def even(x):
 def odd(x):
     """
     True if x is even
-    
+
     >>> odd(1)
     True
 
@@ -333,6 +337,3 @@ def odd(x):
     False
     """
     return operator.mod(x, 2) != 0
-
-
-
