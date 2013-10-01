@@ -1,10 +1,9 @@
 from setuptools import setup, find_packages
 import sys, os
-
-version = '0.1'
+from fp import __version__
 
 setup(name='fp',
-      version=version,
+      version=__version__,
       description="All the good stuff from Functional Programming",
       long_description="""\ A collection of higher-order functions
 that brings the the beauty of FP to Python""",

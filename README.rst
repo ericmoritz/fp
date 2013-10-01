@@ -1,9 +1,11 @@
 This project aims to build a standard collection of functional
 programming inspired tools to Python.
 
-[![Build Status](https://secure.travis-ci.org/ericmoritz/fp.png)](http://travis-ci.org/ericmoritz/fp)
 
-# Goals
+.. image:: https://secure.travis-ci.org/ericmoritz/fp.png
+    :target: http://travis-ci.org/ericmoritz/fp
+
+**Goals**
 
  * Provide the functions to make compositions of functions using
    `partial` and `compose` seen often in FP easier.
