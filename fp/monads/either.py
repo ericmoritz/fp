@@ -5,14 +5,14 @@ from abc import ABCMeta, abstractmethod
 
 class Either(Monad):
     """
-    An Either monad.
-
-    The Either monad is helpful when dealiyng with sequences of
-    functions that can fail.  These functions return Right(value) on
-    success and Left(error) on failure.
+    The Either monad is helpful when dealing with sequences of
+    functions that can fail.  These functions return `Right(value)` on
+    success and `Left(error)` on failure.
 
     When chained together, these functions will short circuit the chain when a
     failure occurs.
+
+    For instance an example of `lookup(dict, key)` could be:
 
     >>> def lookup(d, k):
     ...     try:

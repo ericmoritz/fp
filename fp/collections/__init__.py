@@ -1,14 +1,37 @@
+"""
+The fp.collections module provides utilities for working with collections.
+"""
+
 from fp import trampoline
 
 
 def lookup(monad_cls, collection, key):
     """
+    Lookup a value by a key:
+
     >>> from fp.monads.maybe import Maybe
+
     >>> lookup(Maybe, {'foo': 'bar'}, 'foo')
     Just('bar')
 
     >>> lookup(Maybe, {}, 'foo')
     Nothing
+
+    >>> lookup(Maybe, [1, 2, 3], 2)
+    Just(3)
+
+    >>> lookup(Maybe, [1, 2, 3], 4)
+    Nothing
+
+    >>> lookup(Maybe, [1, 2, 3], 'not a int')
+    Nothing
+
+    >>> from fp.monads.either import Either
+    >>> lookup(Either, [1, 2, 3], 2)
+    Right(3)
+
+    >>> lookup(Either, [1, 2, 3], 4)
+    Left(IndexError('list index out of range',))
     """
     return monad_cls.catch(lambda: collection[key])
 

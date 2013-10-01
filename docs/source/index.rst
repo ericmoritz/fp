@@ -13,6 +13,7 @@ Contents:
 
    fp
    monads
+   collections
 
 Indices and tables
 ==================

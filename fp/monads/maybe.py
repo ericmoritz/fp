@@ -36,7 +36,7 @@ class Maybe(Monad, MonadPlus):
     True
 
     It is even more complex when dealing with mixed types; for
-    instance if "bong" ends up bing a string instead of a dict.
+    instance if "bong" ends up being a list instead of a dict.
 
     The :class:`Maybe` monad lets us express errors such as these as
     either something or nothing.  This is much like :func:`dict.get`
@@ -70,20 +70,6 @@ class Maybe(Monad, MonadPlus):
     >>> lookup({'foo': 'bar'}, 'bong').default('')
     ''
 
-    Other operations are:
-
-    >>> Just(1).is_just
-    True
-
-    >>> Just(1).is_nothing
-    False
-
-    >>> Nothing.is_nothing
-    True
-
-    >>> Nothing.is_just
-    False
-
     To chain the lookups, we simply need to partially apply the lookup
     function:
 
@@ -94,6 +80,26 @@ class Maybe(Monad, MonadPlus):
     >>> lookup(data, "foo").bind(pp(lookup, "bong")).bind(pp(lookup, "baz"))
     Nothing
 
+    This is still not as pretty as it could be so we provide a
+    `get_nested` function in the `fp.collections` module:
+
+    >>> from fp.collections import get_nested
+    >>> get_nested(Maybe, data, "foo", "bar", "baz")
+    Just('bing')
+
+    >>> get_nested(Maybe, data, "foo", "bong", "baz")
+    Nothing
+
+    In addition, functions that return None become Nothing automatically:
+
+    >>> Maybe.ret(None)
+    Nothing
+
+    >>> Maybe.ret({}.get('foo'))
+    Nothing
+
+    This feature allows you to easily integrate the Maybe monad with
+    existing functions that return None.
     """
 
     ##=====================================================================
@@ -212,7 +218,7 @@ class Maybe(Monad, MonadPlus):
 
     def bind(self, f):
         """
-        The Maybe's bind function
+        The Maybe's bind function.  `f` is called only if `self` is a Just.
 
         >>> Just(1).bind(lambda x: Maybe(x))
         Just(1)

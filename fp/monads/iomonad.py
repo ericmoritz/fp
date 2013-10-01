@@ -1,29 +1,4 @@
 """
-This module implements an IO monad.  Its usefulness in Python can be
-argued against (and won easily) but it is implement for completeness.
-
->>> @io
-... def printLn(x):
-...     print(x)
-
-The IO action is returned when calling printLn but nothing
-is printed
-
->>> action = printLn("hi")
->>> isinstance(action, IO)
-True
-
->>> action.run()
-hi
-
-Using bind:
-
->>> printLn("Hello").bind_(
-... lambda: printLn("World")
-... ).run()
-Hello
-World
-
 """
 
 from fp.monads.monad import Monad
@@ -50,12 +25,47 @@ class IO(Monad):
     """
     This is the IO monad.  Useful in composing IO code
 
+    This module implements an IO monad.  Its usefulness in Python can be
+    argued against (and won easily) but it is implement for completeness.
+
+    >>> @io
+    ... def printLn(x):
+    ...     print(x)
+
+    The IO action is returned when calling printLn but nothing
+    is printed
+
+    >>> action = printLn("hi")
+    >>> isinstance(action, IO)
+    True
+
+    >>> action.run()
+    hi
+
+    Using bind:
+
+    >>> printLn("Hello").bind_(
+    ... lambda: printLn("World")
+    ... ).run()
+    Hello
+    World
+
     """
     def __init__(self, action):
         self.__action = action
 
     @classmethod
     def ret(cls, value):
+        """
+        Returns a value in the IO monad:
+
+        >>> action = IO.ret("Hello")
+
+        You can then use bind that to an arrow:
+
+        >>> action.bind(printLn).run()
+        Hello
+        """
         return IO(lambda: value)
 
     def bind(self, f):
