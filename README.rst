@@ -1,7 +1,8 @@
 This project aims to build a standard collection of functional
 programming inspired tools to Python.
 
-<a href="http://travis-ci.org/ericmoritz/fp" <img src="https://secure.travis-ci.org/ericmoritz/fp.png"></a>
+
+.. image: https://secure.travis-ci.org/ericmoritz/fp.png
 
 **Goals**
 
