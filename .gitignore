@@ -1,4 +1,7 @@
+.env/
+*~
 *.py[cod]
+
 
 # C extensions
 *.so
@@ -33,3 +36,9 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+
+# Build dir
+build
+# virtualenvs
+envs/
+.cache/
