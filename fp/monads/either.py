@@ -1,5 +1,5 @@
 import fp
-from fp.monads.monad import Monad, MonadIter
+from fp.monads.monad import Monad
 from abc import ABCMeta, abstractmethod
 
 
@@ -7,11 +7,11 @@ class Either(Monad):
     """
     An Either monad.
 
-    The Either monad is helpful when dealiyng with sequences of functions
-    that can fail.  These functions return Right(value) on success and Left(error) on
-    failure.
+    The Either monad is helpful when dealiyng with sequences of
+    functions that can fail.  These functions return Right(value) on
+    success and Left(error) on failure.
 
-    When chained together, these functions will short circuit the chain when a 
+    When chained together, these functions will short circuit the chain when a
     failure occurs.
 
     >>> def lookup(d, k):
@@ -25,9 +25,9 @@ class Either(Monad):
     >>> lookup({}, 'foo')
     Left(KeyError('foo',))
 
-    The benefit of Either's over Exceptions is that you're forced to handle the
-    error eventually.  You can't let the Exception bubble to the surface and crash your
-    program. Nothing escapes the monad!
+    The benefit of Either's over Exceptions is that you're forced to
+    handle the error eventually.  You can't let the Exception bubble
+    to the surface and crash your program. Nothing escapes the monad!
 
     The Either method lets you handle the error in your own way.
 
@@ -42,7 +42,7 @@ class Either(Monad):
     ...     lambda val: val
     ... )
     'bar'
-    
+
     The default method lets you completely ignore the error:
 
     >>> lookup({'foo': 'bar'}, 'foo').default('bing')
@@ -51,7 +51,8 @@ class Either(Monad):
     >>> lookup({}, 'foo').default('bing')
     'bing'
 
-    Just like any other monad, functions can be chained together using bind(f):
+    Just like any other monad, functions can be chained together using
+    bind(f):
 
     >>> lookup({'foo': {'bar': 'baz'}}, 'foo').bind(
     ... lambda foo: lookup(foo, 'bar'))
@@ -64,7 +65,7 @@ class Either(Monad):
     >>> lookup({}, 'foo').bind(
     ... lambda foo: lookup(foo, 'bar'))
     Left(KeyError('foo',))
-    
+
     """
     __metaclass__ = ABCMeta
 
@@ -75,24 +76,6 @@ class Either(Monad):
     @classmethod
     def fail(cls, exception):
         return Left(exception)
-
-    @classmethod
-    def lefts(cls, eithers):
-        """
-        Filter on the lefts
-
-        >>> Either.lefts([Left(1), Right(2), Left(3)])
-        [Left(1), Left(3)]
-        """
-
-    @classmethod
-    def rights(cls, eithers):
-        """
-        Filter on the rights
-        
-        >>> Either.lefts([Left(1), Right(2), Left(3)])
-        [Right(2)]
-        """
 
     @abstractmethod
     def either(self, left_fun, right_fun):
@@ -105,7 +88,6 @@ class Either(Monad):
         """
         Returns the value if right, default value if left.
         """
-        
 
     @abstractmethod
     def is_left(self):
@@ -137,7 +119,7 @@ class Either(Monad):
         >>> list(Either.rights([Left(1), Right(2), Left(3)]))
         [Right(2)]
         """
-        return fp.ifilter(lambda m: m.is_right(), eithers)        
+        return fp.ifilter(lambda m: m.is_right(), eithers)
 
 
 class Left(Either):
@@ -180,7 +162,7 @@ class Right(Either):
         return right_fun(self.__value)
 
     def default(self, _):
-        return self.__value 
+        return self.__value
 
     def __repr__(self):
         return "Right({0!r})".format(self.__value)
@@ -196,4 +178,3 @@ class Right(Either):
         True
         """
         return False
-

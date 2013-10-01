@@ -16,7 +16,7 @@ def lookup(monad_cls, collection, key):
 def get_nested(monad_cls, collection, *keys):
     """
     >>> from fp.monads.maybe import Maybe
-    >>> from fp.monads.either import Either
+
     >>> data = {'foo': {'bar': {'baz': 'bing'}}}
 
     >>> get_nested(Maybe, data, 'foo', 'bar', 'baz')
@@ -38,16 +38,16 @@ def get_nested(monad_cls, collection, *keys):
     Just({})
     """
     return trampoline(__get_nested(
-        monad_cls, 
+        monad_cls,
         monad_cls.ret(collection),
         keys,
     ))
 
 
 def __get_nested(monad_cls, accM, keys):
-    if len(keys) == 0: 
+    if len(keys) == 0:
         return accM
-    else: 
+    else:
         key = keys[0]
         keys = keys[1:]
         return lambda: accM.bind(

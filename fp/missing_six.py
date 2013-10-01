@@ -2,6 +2,6 @@ import itertools
 import six
 
 if six.PY3:
-    ifilter      = filter
+    ifilter = filter
 else:
-    ifilter      = itertools.ifilter
+    ifilter = itertools.ifilter

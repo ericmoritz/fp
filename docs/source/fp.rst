@@ -26,33 +26,11 @@ those provided by :mod:`functools`.
 
 .. autofunction:: fp.c
 
-.. autofunction:: fp.constantly
+.. autofunction:: fp.const
 
 .. autofunction:: fp.callreturn
 
 .. autofunction:: fp.kwfunc
-
-.. autofunction:: fp.getter
-
-**Operators**
-
-Included with :mod:`fp` are operators which work with higher order
-functions. These are supplemental functions or replacements for those
-found in :mod:`operator`.
-
-`getitem`, `setitem` and `delitem` are slightly different from the
-versions in the :mod:`operator` module.
-
-They exists to provide a common interface for
-:class:`collections.MutableSequence` and
-:class:`collections.MutableMapping` type objects.
-
-
-.. autofunction:: fp.getitem
-
-.. autofunction:: fp.setitem
-
-.. autofunction:: fp.delitem
 
 .. autofunction:: fp.identity
 
@@ -66,3 +44,17 @@ These provide a common set of iterators to supplement the built-in
 .. autofunction:: fp.idrop
 
 .. autofunction:: fp.isplitat
+
+.. autofunction:: fp.izipwith
+
+**Reducers**
+
+.. autofunction:: fp.allmap
+
+.. autofunction:: fp.anymap
+
+**Predicates**
+
+.. autofunction:: fp.even
+
+.. autofunction:: fp.odd

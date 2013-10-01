@@ -17,6 +17,23 @@ your Python code.
 .. autoclass:: fp.monads.maybe.Maybe
     :members:
 
+*fp.monads.maybe**
+
+:mod:`fp.monads` provides an implementation of the :class:`Either` monad.
+
+
+.. autoclass:: fp.monads.either.Either
+    :members:
+
+
+*fp.monads.iomonad**
+
+:mod:`fp.monads` provides an implementation of the :class:`IO` monad. 
+
+.. autoclass:: fp.monads.iomonad.IO
+    :members:
+
+
 **fp.monads.monad**
 
 Provides the base classes for implementeding Monads with :mod:`fp`.

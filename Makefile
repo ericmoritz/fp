@@ -9,7 +9,7 @@ html: test doc-deps
 
 test: deps
 	pip install pytest pytest-cov
-	py.test --doctest-modules --cov fp fp/
+	py.test --pep8 --doctest-modules --cov fp fp/
 
 doc-deps:
 	pip install sphinx
