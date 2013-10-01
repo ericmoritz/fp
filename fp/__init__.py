@@ -160,6 +160,32 @@ Optionally, needed keys can be passed in:
     return inner
 
 
+def trampoline(f):
+    """
+    Use f() as a continuation of a tail-recursive funciton.
+
+    trampoline() will continue to call the result of f() as long as it is
+    callable.  Iteration will stop once f is no longer callable.
+
+    >>> def counter(n):
+    ...     return trampoline(counter_(0, 2000))
+
+    >>> def counter_(acc, n):
+    ...     if n == 0: 
+    ...         return acc
+    ...     else:
+    ...         return lambda: counter_(acc+1, n-1)
+
+    >>> counter(2000)
+    2000
+
+
+    """
+    while callable(f):
+        f = f()
+    return f
+
+
 ####
 ## Operators
 ####
@@ -307,5 +333,6 @@ def odd(x):
     False
     """
     return operator.mod(x, 2) != 0
+
 
 
