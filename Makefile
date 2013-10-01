@@ -8,7 +8,7 @@ html: test doc-deps
 
 
 test: deps
-	pip install pytest pytest-cov
+	pip install pytest pytest-cov pytest-pep8
 	py.test --pep8 --doctest-modules --cov fp fp/
 
 doc-deps:

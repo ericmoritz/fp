@@ -7,3 +7,4 @@
 .. versionadded:: 0.1
 
 .. automodule:: fp.collections
+    :members:

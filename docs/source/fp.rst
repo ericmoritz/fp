@@ -8,7 +8,7 @@
 .. versionadded:: 0.1
 
 the :mod:`fp` module provides a collection of functional programming
-inspired utilities which makes working with `iterators` easier. 
+inspired utilities.
 
 this module supplements the core :mod:`operator`, :mod:`functools`,
 and :mod:`itertools` modules.
