@@ -3,6 +3,7 @@ programming inspired tools to Python.
 
 
 .. image:: https://secure.travis-ci.org/ericmoritz/fp.png
+    :target: http://travis-ci.org/ericmoritz/fp
 
 **Goals**
 
