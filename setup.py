@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 import sys, os
 
 setup(name='fp',
-      version="0.1.2",
+      version="0.2",
       description="All the good stuff from Functional Programming",
       long_description="""\ A collection of higher-order functions
 that brings the the beauty of FP to Python""",
