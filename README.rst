@@ -16,3 +16,7 @@ programming inspired tools to Python.
  * Provide a common interface to existing tools that makes using
    partials with higher-order functions more natural
  * Provide a collection of Monads that are helpful for Python development
+
+`Read the docs`_
+
+.. _Read the docs: http://fp.readthedocs.org/
