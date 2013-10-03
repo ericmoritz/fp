@@ -7,7 +7,7 @@ from six import moves
 from fp.missing_six import ifilter
 
 
-__version__ = "0.1.2"
+__version__ = "0.2"
 
 
 ####

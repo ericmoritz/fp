@@ -30,6 +30,20 @@ def lookup(monad_cls, collection, key):
     return monad_cls.catch(lambda: collection[key])
 
 
+def get(monad_cls, key, collection):
+    """
+    A partial friendly version of lookup
+
+    >>> from fp.monads.maybe import Maybe
+    >>> get(Maybe, 'foo', {'foo': 'bar'})
+    Just('bar')
+
+    >>> get(Maybe, 'foo', {})
+    Nothing
+    """
+    return lookup(monad_cls, collection, key)
+
+
 def get_nested(monad_cls, collection, *keys):
     """
     Get a value deep inside a nested data structure
