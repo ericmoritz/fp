@@ -175,6 +175,21 @@ class Monad(object):
         """
         return cls.arrow_cl(arrow2, arrow1)
 
+    def map(self, f):
+        """
+        Calls a unary function with the value in the monad
+
+        >>> from fp.monads.maybe import Maybe, Just, Nothing
+        >>> Just("1").map(int)
+        Just(1)
+
+        >>> Nothing.map(int)
+        Nothing
+        """
+        return self.bind(
+            lambda x: self.ret(f(x))
+        )
+
     @classmethod
     def ap(cls, f, *monads, **kwarg_monads):
         """
